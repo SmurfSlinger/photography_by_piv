@@ -11,7 +11,19 @@ export default function Home() {
         </header>
       <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
       <div>
-        <h2>Main content</h2>
+        <h2>Hero photo here</h2>
+      </div>
+      <div>
+        <h2>Bio here/about me</h2>
+      </div>
+      <div>
+        <h2>Pricing</h2>
+      </div>
+      <div>
+        <h2>Book with me (integrate calendar)</h2>
+      </div>
+      <div>
+        <h2>Portfolio</h2>
       </div>
       </main>
     </div>
