@@ -76,6 +76,9 @@ next-env.d.ts
 *.mp4
 *.mov
 
+# local gallery seed manifests (real client data)
+scripts/seed/*.local.json
+
 # local upload/config files
 rclone.conf
 galleries.txt
