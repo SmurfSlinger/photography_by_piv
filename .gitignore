@@ -44,3 +44,40 @@ next-env.d.ts
 .reference-frames/
 
 /cheat-sheet.MD
+
+# customer/client photos and galleries - never commit
+/public/galleries/
+/customer-galleries/
+/galleries/
+/lightroom-photos/
+/photo-exports/
+/uploads/
+
+# raw/full-resolution photo/video files
+*.CR2
+*.CR3
+*.NEF
+*.ARW
+*.DNG
+*.RAF
+*.ORF
+*.RW2
+*.cr2
+*.cr3
+*.nef
+*.arw
+*.dng
+*.raf
+*.orf
+*.rw2
+*.MP4
+*.MOV
+*.mp4
+*.mov
+
+# local upload/config files
+rclone.conf
+galleries.txt
+upload-galleries.sh
+copy-2-dirs-to-d.sh
+*.log
