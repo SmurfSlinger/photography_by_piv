@@ -40,5 +40,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-/package.json
+# local analysis artifacts (not part of the site)
+.reference-frames/
+
 /cheat-sheet.MD
