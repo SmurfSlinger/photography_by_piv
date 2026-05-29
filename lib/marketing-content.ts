@@ -1,6 +1,14 @@
 export const site = {
   name: "Photography by Piv",
   tagline: "Wedding, portrait & family photography · Tremonton, Utah",
+  /** Replace with Piv's own hero tagline or quote when ready */
+  heroSubline:
+    "Capturing honest moments and the people behind them—one session at a time.",
+} as const;
+
+export const bookCta = {
+  label: "Request to Book",
+  href: "#contact",
 } as const;
 
 export const navLinks = [
@@ -8,27 +16,24 @@ export const navLinks = [
   { label: "Portfolio", href: "#work" },
   { label: "About", href: "#about" },
   { label: "Pricing", href: "#pricing" },
-  { label: "Book", href: "#contact" },
+  { label: bookCta.label, href: bookCta.href, isPrimary: true },
 ] as const;
 
 export const intro = {
-  bio: "I photograph the moments that matter—quiet glances, loud laughter, and everything in between. Based in Tremonton, Utah, I work with couples, families, and individuals who want timeless images they will love for years.",
-  specialties: [
-    "Weddings",
-    "Couples",
-    "Family",
-    "Maternity",
-    "Newborn",
-    "Portrait",
-    "Graduation",
-  ],
+  eyebrow: "Welcome",
+  /** Welcome voice: love of photography, meeting people, personality */
+  bio: "Photography is how I connect—with light, with story, and especially with people. I love meeting new faces, hearing what matters to you, and creating a space where you can simply be yourself. Whether it is a quiet portrait or a full wedding day, my goal is to make you feel seen, celebrated, and at ease in front of the camera.",
+  specialties: ["Weddings", "Couples", "Families", "Portraits"] as const,
+  /** Shown below the specialty pills — Portraits is one of her favorites */
+  portraitNote: "Portraits are one of my absolute favorites—individual, couple, or creative.",
+  /** Replace with Piv's own words when ready */
   quote: {
-    text: "Photos remind us that the best chapters of our lives are the ones we lived together.",
-    attribution: "",
+    text: "You don't take a photograph, you make it.",
+    attribution: "— Ansel Adams",
   },
 } as const;
 
-/** Public marketing portfolio only — add files under public/images/ */
+/** Public marketing portfolio only — swap src paths when Piv adds approved images under public/images/ */
 export const workPhotos = [
   {
     src: "/images/hero.jpg",
@@ -48,40 +53,131 @@ export const workPhotos = [
     title: "Families",
     subtitle: "At home or on location",
   },
+  {
+    src: "/images/hero.jpg",
+    alt: "Portrait photography session",
+    title: "Portraits",
+    subtitle: "A favorite — individual & creative sessions",
+  },
 ] as const;
 
-export const about = {
-  heading: "About",
-  name: "Piv",
-  body: "I believe every session should feel relaxed and personal. Whether it is your wedding day or a simple portrait at home, my goal is to guide you gently, capture honest emotion, and deliver a gallery you are proud to share.",
+export const portfolio = {
+  eyebrow: "Portfolio",
+  heading: "A glimpse of my work",
+  body: "Swipe through a few of the moments and moods I love to capture. Your gallery will be curated with the same care and warmth.",
+  scrollHint: "Swipe to browse · Sample images shown",
 } as const;
 
-export const pricingPackages = [
+export const about = {
+  heading: "About Me",
+  name: "Piv",
+  imageSrc: "/images/hero.jpg",
+  imageAlt: "Piv, photographer based in Tremonton, Utah",
+  /** Replace bracketed placeholders with Piv's final wording */
+  paragraphs: [
+    "Hi, I'm Piv—a photographer based in Tremonton, Utah. I grew up in [your hometown / region], and that sense of home still shapes how I see people and places through my lens.",
+    "When I'm not behind the camera, you'll find me [hobbies and interests—e.g. hiking, baking, time with family]. Those little joys keep me grounded and remind me why the everyday moments are worth remembering.",
+    "At my core, I'm [a few words about who you are—warm, curious, a good listener, etc.]. I show up for every session ready to meet you where you are and tell your story with honesty and heart.",
+  ],
+} as const;
+
+export type PricingPackage = {
+  name: string;
+  description: string;
+  priceFrom: string;
+  note?: string;
+};
+
+export const pricingCategories: ReadonlyArray<{
+  label: string;
+  packages: readonly PricingPackage[];
+}> = [
   {
-    name: "Timeless Wedding Collection",
-    description:
-      "Engagement session, bridal portraits, and six hours of wedding day coverage—ideal if you want cohesive images from first look through reception.",
-    priceFrom: "$1,750",
-    note: "Additional coverage available",
+    label: "Weddings",
+    packages: [
+      {
+        name: "Timeless Wedding Collection",
+        description:
+          "Engagement session, bridal portraits, and six hours of wedding day coverage—ideal if you want cohesive images from first look through reception.",
+        priceFrom: "$1,750",
+        note: "Additional coverage available",
+      },
+      {
+        name: "Romantic Wedding Collection",
+        description:
+          "Choose either an engagement or bridal session, plus six hours on your wedding day. A thoughtful option when you want one pre-wedding session without both.",
+        priceFrom: "$1,500",
+        note: "Additional coverage available",
+      },
+    ],
   },
   {
-    name: "Romantic Wedding Collection",
-    description:
-      "Choose either an engagement or bridal session, plus six hours on your wedding day. A thoughtful option when you want one pre-wedding session without both.",
-    priceFrom: "$1,500",
-    note: "Additional coverage available",
+    label: "Couples",
+    packages: [
+      {
+        name: "Engagement Session",
+        description:
+          "On-location session for newly engaged couples—relaxed posing, golden-hour light, and images you'll love for save-the-dates and beyond.",
+        priceFrom: "Starting rate TBD",
+        note: "Piv will add final pricing",
+      },
+      {
+        name: "Couples / Anniversary Session",
+        description:
+          "Celebrate your relationship with a session built around your story—engagements, anniversaries, or just because.",
+        priceFrom: "Starting rate TBD",
+        note: "Piv will add final pricing",
+      },
+    ],
   },
   {
-    name: "Portrait Session",
-    description:
-      "One hour on location, up to two outfits, and a curated set of edited digital images ready to print or share.",
-    priceFrom: "$150",
+    label: "Portraits",
+    packages: [
+      {
+        name: "Portrait Session",
+        description:
+          "One hour on location, up to two outfits, and a curated set of edited digital images ready to print or share.",
+        priceFrom: "$150",
+      },
+      {
+        name: "Extended Portrait Session",
+        description:
+          "More time and flexibility for creative portraits, multiple looks, or a session that goes at an unhurried pace.",
+        priceFrom: "Starting rate TBD",
+        note: "Piv will add final pricing",
+      },
+    ],
+  },
+  {
+    label: "Families",
+    packages: [
+      {
+        name: "Family Session",
+        description:
+          "Relaxed family portraits at home or on location—candid laughs, cozy togetherness, and images you'll want on the wall.",
+        priceFrom: "Starting rate TBD",
+        note: "Piv will add final pricing",
+      },
+      {
+        name: "Mini Family Session",
+        description:
+          "A shorter session perfect for updating photos with kids, extended family in town, or a quick seasonal refresh.",
+        priceFrom: "Starting rate TBD",
+        note: "Piv will add final pricing",
+      },
+    ],
   },
 ] as const;
 
+export const pricing = {
+  intro:
+    "Every session is a little different. These collections are a starting point—reach out and we will tailor something that fits your day and your budget.",
+} as const;
+
 export const contact = {
-  heading: "Let's connect",
+  eyebrow: "Request to Book",
+  heading: "Ready to book?",
   body: "Tell me about your session, date, and vision. I will reply with availability and next steps—usually within one to two business days.",
-  ctaLabel: "Request a session",
-  ctaHref: "mailto:hello@photographybypiv.com?subject=Session%20inquiry",
+  mailtoHref:
+    "mailto:hello@photographybypiv.com?subject=Session%20inquiry",
 } as const;

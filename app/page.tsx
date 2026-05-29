@@ -3,9 +3,12 @@ import GalleryGrid from "@/components/GalleryGrid";
 import Navbar from "@/components/Navbar";
 import {
   about,
+  bookCta,
   contact,
   intro,
-  pricingPackages,
+  portfolio,
+  pricing,
+  pricingCategories,
   site,
 } from "@/lib/marketing-content";
 
@@ -34,8 +37,11 @@ export default function Home() {
             {site.name}
           </h1>
           <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/90 sm:text-lg">
-            Timeless images for weddings, families, and every season in between.
+            {site.heroSubline}
           </p>
+          <a href={bookCta.href} className="btn-primary mt-8">
+            {bookCta.label}
+          </a>
         </div>
       </section>
 
@@ -44,22 +50,29 @@ export default function Home() {
         id="intro"
         className="section-anchor mx-auto max-w-3xl section-pad px-6 sm:px-8"
       >
-        <p className="eyebrow">Welcome</p>
+        <p className="eyebrow">{intro.eyebrow}</p>
         <p className="mt-4 text-lg leading-relaxed text-stone-700 sm:text-xl">
           {intro.bio}
         </p>
         <div className="mt-12">
-          <p className="eyebrow">Sessions I love</p>
+          <p className="eyebrow">Specialties</p>
           <ul className="mt-5 flex flex-wrap gap-2.5">
             {intro.specialties.map((item) => (
               <li
                 key={item}
-                className="rounded-full border border-stone-300/70 bg-[#faf7f2] px-4 py-2 text-sm text-stone-700"
+                className={
+                  item === "Portraits"
+                    ? "rounded-full border border-[#5c6b4a]/40 bg-[#5c6b4a]/10 px-4 py-2 text-sm font-medium text-stone-800"
+                    : "rounded-full border border-stone-300/70 bg-[#faf7f2] px-4 py-2 text-sm text-stone-700"
+                }
               >
                 {item}
               </li>
             ))}
           </ul>
+          <p className="mt-4 text-sm leading-relaxed text-stone-600 italic">
+            {intro.portraitNote}
+          </p>
         </div>
         <blockquote className="mt-14 rounded-2xl border border-stone-200/80 bg-[#faf7f2] px-6 py-8 sm:px-8">
           <p className="font-serif text-xl leading-relaxed text-stone-700 italic sm:text-2xl">
@@ -73,43 +86,29 @@ export default function Home() {
         </blockquote>
       </section>
 
-      {/* Public work gallery */}
-      <section
-        id="work"
-        className="section-anchor bg-[#e8dfd0]/50 py-20 md:py-24"
-      >
-        <div className="mx-auto max-w-6xl px-6 sm:px-8">
-          <p className="eyebrow">Portfolio</p>
-          <h2 className="section-title mt-3">Recent sessions</h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-            A glimpse of the moments and moods I love to capture. Your gallery
-            will be curated with the same care and warmth.
-          </p>
-          <div className="mt-12">
-            <GalleryGrid />
-          </div>
-        </div>
-      </section>
-
       {/* About */}
       <section
         id="about"
-        className="section-anchor mx-auto max-w-3xl section-pad px-6 sm:px-8"
+        className="section-anchor mx-auto max-w-5xl section-pad px-6 sm:px-8"
       >
         <p className="eyebrow">{about.heading}</p>
         <h2 className="section-title mt-3">Hi, I&apos;m {about.name}</h2>
-        <div className="relative mx-auto mt-10 aspect-[4/5] max-w-xs overflow-hidden rounded-2xl shadow-md ring-1 ring-stone-200/60 sm:max-w-sm">
-          <Image
-            src="/images/hero.jpg"
-            alt="Piv, photographer based in Tremonton, Utah"
-            fill
-            className="object-cover"
-            sizes="(max-width: 640px) 90vw, 384px"
-          />
+        <div className="mt-10 grid items-center gap-10 md:grid-cols-2 md:gap-12">
+          <div className="relative mx-auto aspect-[4/5] w-full max-w-xs overflow-hidden rounded-2xl shadow-md ring-1 ring-stone-200/60 sm:max-w-sm md:mx-0">
+            <Image
+              src={about.imageSrc}
+              alt={about.imageAlt}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 90vw, 384px"
+            />
+          </div>
+          <div className="space-y-5 text-base leading-relaxed text-stone-700 sm:text-lg">
+            {about.paragraphs.map((paragraph) => (
+              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+            ))}
+          </div>
         </div>
-        <p className="mt-10 text-base leading-relaxed text-stone-700 sm:text-lg">
-          {about.body}
-        </p>
       </section>
 
       {/* Pricing */}
@@ -121,35 +120,63 @@ export default function Home() {
           <p className="eyebrow">Invest in your memories</p>
           <h2 className="section-title mt-3">Packages & starting rates</h2>
           <p className="mt-4 text-base leading-relaxed text-stone-600">
-            Every session is a little different. These collections are a
-            starting point—reach out and we will tailor something that fits your
-            day and your budget.
+            {pricing.intro}
           </p>
-          <ul className="mt-12 flex flex-col gap-5">
-            {pricingPackages.map((pkg) => (
-              <li
-                key={pkg.name}
-                className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm"
-              >
-                <div className="p-6 sm:p-7">
-                  <h3 className="font-serif text-xl text-stone-900">
-                    {pkg.name}
-                  </h3>
-                  <p className="mt-3 text-sm leading-relaxed text-stone-600 sm:text-base">
-                    {pkg.description}
-                  </p>
-                  {"note" in pkg && pkg.note && (
-                    <p className="mt-3 text-sm text-stone-500">{pkg.note}</p>
-                  )}
-                </div>
-                <div className="border-t border-stone-100 bg-stone-50/80 px-6 py-3.5 sm:px-7">
-                  <p className="eyebrow !text-[0.65rem]">
-                    Starting at {pkg.priceFrom}
-                  </p>
-                </div>
-              </li>
+          <div className="mt-12 flex flex-col gap-12">
+            {pricingCategories.map((category) => (
+              <div key={category.label}>
+                <h3 className="font-serif text-xl text-stone-900">
+                  {category.label}
+                </h3>
+                <ul className="mt-5 flex flex-col gap-5">
+                  {category.packages.map((pkg) => (
+                    <li
+                      key={pkg.name}
+                      className="overflow-hidden rounded-2xl border border-stone-200/80 bg-white shadow-sm"
+                    >
+                      <div className="p-6 sm:p-7">
+                        <h4 className="font-serif text-lg text-stone-900">
+                          {pkg.name}
+                        </h4>
+                        <p className="mt-3 text-sm leading-relaxed text-stone-600 sm:text-base">
+                          {pkg.description}
+                        </p>
+                        {pkg.note ? (
+                          <p className="mt-3 text-sm text-stone-500">
+                            {pkg.note}
+                          </p>
+                        ) : null}
+                      </div>
+                      <div className="border-t border-stone-100 bg-stone-50/80 px-6 py-3.5 sm:px-7">
+                        <p className="eyebrow !text-[0.65rem]">
+                          {pkg.priceFrom.startsWith("$")
+                            ? `Starting at ${pkg.priceFrom}`
+                            : pkg.priceFrom}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* Public work gallery */}
+      <section
+        id="work"
+        className="section-anchor bg-[#e8dfd0]/50 py-20 md:py-24"
+      >
+        <div className="mx-auto max-w-6xl px-6 sm:px-8">
+          <p className="eyebrow">{portfolio.eyebrow}</p>
+          <h2 className="section-title mt-3">{portfolio.heading}</h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
+            {portfolio.body}
+          </p>
+          <div className="mt-12">
+            <GalleryGrid />
+          </div>
         </div>
       </section>
 
@@ -159,13 +186,13 @@ export default function Home() {
         className="section-anchor border-t border-stone-200/60 bg-[#f5f0e8] px-6 py-24 text-center sm:px-8 md:py-28"
       >
         <div className="mx-auto max-w-xl">
-          <p className="eyebrow">Book</p>
+          <p className="eyebrow">{contact.eyebrow}</p>
           <h2 className="section-title mt-3">{contact.heading}</h2>
           <p className="mx-auto mt-5 text-base leading-relaxed text-stone-600">
             {contact.body}
           </p>
-          <a href={contact.ctaHref} className="btn-primary mt-10">
-            {contact.ctaLabel}
+          <a href={contact.mailtoHref} className="btn-primary mt-10">
+            {bookCta.label}
           </a>
         </div>
       </section>

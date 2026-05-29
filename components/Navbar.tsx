@@ -19,7 +19,7 @@ export default function Navbar() {
 
         <nav className="hidden items-center gap-6 lg:gap-8 md:flex">
           {navLinks.map((link) =>
-            link.label === "Book" ? (
+            "isPrimary" in link && link.isPrimary ? (
               <a
                 key={link.href}
                 href={link.href}
@@ -71,7 +71,7 @@ export default function Navbar() {
                 <a
                   href={link.href}
                   className={
-                    link.label === "Book"
+                    "isPrimary" in link && link.isPrimary
                       ? "btn-primary mt-3 w-full"
                       : "block rounded-lg px-2 py-2.5 text-base text-stone-700 hover:bg-stone-100/80"
                   }
