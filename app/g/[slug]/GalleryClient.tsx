@@ -17,6 +17,44 @@ type PhotosResponse = {
   photos: ClientPhoto[];
 };
 
+function GallerySpinner({ label }: { label: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center px-6 py-24 text-center">
+      <div
+        className="h-10 w-10 animate-spin rounded-full border-2 border-stone-300 border-t-[#5c6b4a]"
+        aria-hidden
+      />
+      <p className="mt-5 text-base text-stone-600">{label}</p>
+    </div>
+  );
+}
+
+function GalleryMessage({
+  title,
+  body,
+  action,
+}: {
+  title: string;
+  body: string;
+  action?: { label: string; onClick: () => void };
+}) {
+  return (
+    <div className="mx-auto max-w-md px-6 py-24 text-center">
+      <h2 className="font-serif text-2xl text-stone-800">{title}</h2>
+      <p className="mt-4 text-base leading-relaxed text-stone-600">{body}</p>
+      {action && (
+        <button
+          type="button"
+          onClick={action.onClick}
+          className="btn-primary mt-8"
+        >
+          {action.label}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export default function GalleryClient({
   slug,
   title,
@@ -35,7 +73,10 @@ export default function GalleryClient({
     const response = await fetch(`/api/galleries/${slug}/photos`);
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      setError(data.error ?? "Could not load photos");
+      setError(
+        data.error ??
+          "We could not load your gallery. Please refresh the page or try again shortly."
+      );
       setLoading(false);
       return;
     }
@@ -58,6 +99,7 @@ export default function GalleryClient({
     }
 
     setDownloading(true);
+    setError(null);
     try {
       const response = await fetch(
         `/api/galleries/${slug}/photos/${selected.id}/download`,
@@ -66,7 +108,7 @@ export default function GalleryClient({
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Download failed");
+        setError(data.error ?? "Download could not be started. Please try again.");
         return;
       }
 
@@ -88,42 +130,68 @@ export default function GalleryClient({
   }
 
   if (loading) {
+    return <GallerySpinner label="Loading your gallery…" />;
+  }
+
+  if (error && photos.length === 0) {
     return (
-      <p className="px-6 py-24 text-center text-stone-600">Loading photos…</p>
+      <GalleryMessage
+        title="Something went wrong"
+        body={error}
+        action={{ label: "Try again", onClick: () => loadPhotos() }}
+      />
     );
   }
 
-  if (error) {
+  if (photos.length === 0) {
     return (
-      <p className="px-6 py-24 text-center text-red-700">{error}</p>
+      <GalleryMessage
+        title="Gallery is empty"
+        body="There are no photos in this gallery yet. If you believe this is a mistake, please contact your photographer."
+      />
     );
   }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6">
-      <h1 className="font-serif text-3xl text-stone-800 sm:text-4xl">{title}</h1>
-      <p className="mt-2 text-sm text-stone-500">
-        Full-resolution previews until dedicated web/thumb sizes are added.
-      </p>
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
+      <header className="max-w-2xl">
+        <p className="eyebrow">Your gallery</p>
+        <h1 className="section-title mt-2">{title}</h1>
+        <p className="mt-3 text-sm text-stone-600 sm:text-base">
+          {photos.length} {photos.length === 1 ? "photo" : "photos"} · Tap a
+          thumbnail below to preview, then download your favorites.
+        </p>
+      </header>
+
+      {error && (
+        <p
+          className="mt-6 rounded-xl border border-red-200/80 bg-red-50 px-4 py-3 text-sm text-red-800"
+          role="alert"
+        >
+          {error}
+        </p>
+      )}
 
       {selected && (
-        <div className="mt-8 overflow-hidden rounded-xl bg-white shadow-md">
+        <div className="mt-8 overflow-hidden rounded-2xl bg-white shadow-md ring-1 ring-stone-200/60">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={selected.displayUrl}
             alt={selected.filename}
-            className="max-h-[70vh] w-full object-contain"
+            className="max-h-[min(70vh,720px)] w-full bg-stone-100 object-contain"
           />
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-stone-100 px-4 py-3">
-            <span className="text-sm text-stone-600">{selected.filename}</span>
+          <div className="flex flex-col gap-3 border-t border-stone-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <span className="truncate text-sm text-stone-600">
+              {selected.filename}
+            </span>
             {allowDownload && (
               <button
                 type="button"
                 onClick={handleDownload}
                 disabled={downloading}
-                className="rounded-full bg-[#5c6b4a] px-5 py-2 text-sm font-medium text-white hover:bg-[#4a5740] disabled:opacity-60"
+                className="btn-primary w-full shrink-0 !px-6 !py-2.5 sm:w-auto disabled:opacity-60"
               >
-                {downloading ? "Preparing…" : "Download original"}
+                {downloading ? "Preparing download…" : "Download photo"}
               </button>
             )}
           </div>

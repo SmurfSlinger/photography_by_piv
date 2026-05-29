@@ -27,8 +27,9 @@ export default function TokenExchange({ slug, token }: TokenExchangeProps) {
       }
 
       if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        setError(data.error ?? "Could not verify access link");
+        setError(
+          "This link is invalid or has expired. Please contact your photographer for a new gallery link."
+        );
         return;
       }
 
@@ -44,16 +45,28 @@ export default function TokenExchange({ slug, token }: TokenExchangeProps) {
   }, [slug, token, router]);
 
   return (
-    <div className="mx-auto max-w-lg px-6 py-24 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center px-6 py-24 text-center sm:py-28">
       {error ? (
         <>
-          <h1 className="font-serif text-2xl text-stone-800">Access denied</h1>
-          <p className="mt-4 text-stone-600">{error}</p>
+          <h1 className="font-serif text-2xl text-stone-800">
+            Unable to open gallery
+          </h1>
+          <p className="mt-4 text-base leading-relaxed text-stone-600">
+            {error}
+          </p>
         </>
       ) : (
         <>
-          <h1 className="font-serif text-2xl text-stone-800">Opening gallery</h1>
-          <p className="mt-4 text-stone-600">Verifying your secure link…</p>
+          <div
+            className="h-10 w-10 animate-spin rounded-full border-2 border-stone-300 border-t-[#5c6b4a]"
+            aria-hidden
+          />
+          <h1 className="mt-8 font-serif text-2xl text-stone-800">
+            Welcome to your gallery
+          </h1>
+          <p className="mt-4 text-base text-stone-600">
+            Securing your session…
+          </p>
         </>
       )}
     </div>
