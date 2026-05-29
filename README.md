@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Photography by Piv
 
-## Getting Started
+Next.js marketing site plus private client galleries backed by PostgreSQL and Cloudflare R2.
 
-First, run the development server:
+## Marketing site (Phase 1A)
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The home page includes the sticky marketing navbar; private gallery routes do not.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Private galleries (Phase 1B)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Prerequisites
 
-## Learn More
+- PostgreSQL database
+- Private Cloudflare R2 bucket with photos at `galleries/{slug}/{filename}`
+- Copy [`.env.example`](.env.example) to `.env` and fill in values
 
-To learn more about Next.js, take a look at the following resources:
+### Database setup
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm run db:deploy    # production (R310)
+# or
+npm run db:migrate   # local development
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Register a gallery (existing R2 files)
 
-## Deploy on Vercel
+Edit a manifest (see [`scripts/seed/example.json`](scripts/seed/example.json)), then:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run register-gallery -- scripts/seed/example.json
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This creates DB rows with `r2_key_original = galleries/{slug}/{filename}` and leaves `r2_key_thumb` / `r2_key_web` null.
+
+### Create a client access link
+
+```bash
+npm run create-gallery-token -- your-gallery-slug "optional label"
+```
+
+Prints a one-time share URL: `https://yoursite.com/g/{slug}?t=...`
+
+### Client flow
+
+1. Client opens the share URL.
+2. App validates the token and sets an httpOnly session cookie.
+3. `/g/{slug}` loads photos via signed URLs (display uses `thumb ?? web ?? original`; MVP uses originals).
+4. Download requests a short-lived signed URL for the original only.
+
+### Scripts only (no admin HTTP API)
+
+- `npm run register-gallery`
+- `npm run create-gallery-token`
+
+R2 secret keys and token peppers stay on the server; the browser only receives presigned URLs.
+
+### Later
+
+- Preprocess `thumbs/` and `web/` in R2 and backfill DB columns for better grid performance.
+
+## Build
+
+```bash
+npm run build
+npm start
+```

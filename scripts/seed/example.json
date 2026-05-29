@@ -1,0 +1,10 @@
+{
+  "slug": "example-gallery",
+  "title": "Example Gallery",
+  "clientName": "Example Client",
+  "status": "active",
+  "photos": [
+    { "filename": "IMG_001.jpg", "sortOrder": 0 },
+    { "filename": "IMG_002.jpg", "sortOrder": 1 }
+  ]
+}

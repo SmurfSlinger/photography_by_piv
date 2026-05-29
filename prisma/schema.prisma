@@ -1,0 +1,68 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum GalleryStatus {
+  draft
+  active
+  archived
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  createdAt DateTime  @default(now()) @map("created_at")
+  galleries Gallery[]
+
+  @@map("clients")
+}
+
+model Gallery {
+  id                    String               @id @default(uuid())
+  clientId              String               @map("client_id")
+  client                Client               @relation(fields: [clientId], references: [id])
+  slug                  String               @unique
+  title                 String
+  status                GalleryStatus        @default(draft)
+  allowOriginalDownload Boolean              @default(true) @map("allow_original_download")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  photos                Photo[]
+  accessTokens          GalleryAccessToken[]
+
+  @@map("galleries")
+}
+
+model Photo {
+  id            String   @id @default(uuid())
+  galleryId     String   @map("gallery_id")
+  gallery       Gallery  @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  r2KeyOriginal String   @map("r2_key_original")
+  r2KeyWeb      String?  @map("r2_key_web")
+  r2KeyThumb    String?  @map("r2_key_thumb")
+  filename      String
+  sortOrder     Int      @default(0) @map("sort_order")
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@index([galleryId])
+  @@map("photos")
+}
+
+model GalleryAccessToken {
+  id         String    @id @default(uuid())
+  galleryId  String    @map("gallery_id")
+  gallery    Gallery   @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  tokenHash  String    @map("token_hash")
+  label      String?
+  expiresAt  DateTime? @map("expires_at")
+  revokedAt  DateTime? @map("revoked_at")
+  createdAt  DateTime  @default(now()) @map("created_at")
+
+  @@index([galleryId])
+  @@map("gallery_access_tokens")
+}

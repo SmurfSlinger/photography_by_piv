@@ -1,5 +1,6 @@
 import Image from "next/image";
 import GalleryGrid from "@/components/GalleryGrid";
+import Navbar from "@/components/Navbar";
 import {
   about,
   contact,
@@ -11,6 +12,7 @@ import {
 export default function Home() {
   return (
     <div className="bg-[#f5f0e8] text-stone-800">
+      <Navbar />
       {/* Hero / brand */}
       <section
         id="home"
