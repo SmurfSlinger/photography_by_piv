@@ -1,3 +1,5 @@
+import { Suspense } from "react";
+
 import Navbar from "@/components/Navbar";
 import BookingForm from "@/components/BookingForm";
 import { bookPage, site } from "@/lib/marketing-content";
@@ -19,7 +21,9 @@ export default function BookPage() {
           {bookPage.body}
         </p>
         <div className="mt-10">
-          <BookingForm />
+          <Suspense fallback={<p className="text-stone-600">Loading form…</p>}>
+            <BookingForm />
+          </Suspense>
         </div>
       </main>
       <footer className="border-t border-stone-200/60 px-6 py-8 text-center text-sm text-stone-500">

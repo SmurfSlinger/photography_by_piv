@@ -43,6 +43,11 @@ next-env.d.ts
 
 # local analysis artifacts (not part of the site)
 .reference-frames/
+/r2-all-files.txt
+/r2-all-bucket-files.txt
+/marketing-image-filenames.txt
+/marketing-image-search-report.json
+/public/images/marketing-originals/
 
 /cheat-sheet.MD
 

@@ -1,7 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
+import HeroBelowNav from "@/components/HeroBelowNav";
 import Navbar from "@/components/Navbar";
 import PortfolioCarousel from "@/components/PortfolioCarousel";
 import SpecialtyGrid from "@/components/SpecialtyGrid";
+import { packageBookHref } from "@/lib/booking-options";
 import {
   about,
   bookCta,
@@ -9,6 +12,7 @@ import {
   intro,
   portfolio,
   pricing,
+  pricingAdditionalInfo,
   pricingCategories,
   site,
 } from "@/lib/marketing-content";
@@ -18,38 +22,12 @@ export default function Home() {
     <div className="bg-[#f5f0e8] text-stone-800">
       <Navbar />
 
-      {/* Hero / brand */}
-      <section
-        id="home"
-        className="section-anchor relative flex min-h-[min(92vh,900px)] items-center justify-center"
-      >
-        <Image
-          src="/images/hero.jpg"
-          alt="Photography by Piv — portrait and wedding photography"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-stone-900/45 via-stone-900/30 to-stone-900/50" />
-        <div className="relative z-10 mx-auto max-w-4xl px-6 text-center text-white">
-          <p className="eyebrow !text-white/85">{site.tagline}</p>
-          <h1 className="mt-5 font-serif text-5xl leading-tight tracking-wide sm:text-6xl md:text-7xl">
-            {site.name}
-          </h1>
-          <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/90 sm:text-lg">
-            {site.heroSubline}
-          </p>
-          <a href={bookCta.href} className="btn-primary mt-8">
-            {bookCta.label}
-          </a>
-        </div>
-      </section>
+      <HeroBelowNav />
 
       {/* Welcome + specialties */}
       <section
         id="intro"
-        className="section-anchor py-20 md:py-24"
+        className="section-anchor pb-0 pt-20 md:pt-24"
       >
         <div className="mx-auto max-w-3xl px-6 sm:px-8">
           <p className="eyebrow">{intro.eyebrow}</p>
@@ -59,19 +37,14 @@ export default function Home() {
         </div>
 
         <div className="mx-auto mt-14 max-w-6xl px-6 sm:px-8">
-          <p className="eyebrow">Specialties</p>
-          <h2 className="section-title mt-3">Sessions I photograph</h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-            From quiet portraits to full wedding days—each session is guided
-            with care and an eye for the moments that matter.
-          </p>
+          <h2 className="section-title">My Specialties</h2>
           <div className="mt-10">
             <SpecialtyGrid />
           </div>
         </div>
 
-        <div className="mx-auto mt-14 max-w-3xl px-6 sm:px-8">
-          <blockquote className="rounded-2xl border border-stone-200/80 bg-[#faf7f2] px-6 py-8 sm:px-8">
+        <div className="mx-auto mt-10 max-w-2xl px-6 text-center sm:px-8 md:mt-12">
+          <blockquote className="rounded-2xl border border-stone-200/80 bg-[#faf7f2] px-6 py-7 sm:px-8 sm:py-8">
             <p className="font-serif text-xl leading-relaxed text-stone-700 italic sm:text-2xl">
               &ldquo;{intro.quote.text}&rdquo;
             </p>
@@ -87,7 +60,7 @@ export default function Home() {
       {/* About */}
       <section
         id="about"
-        className="section-anchor mx-auto max-w-5xl section-pad px-6 sm:px-8"
+        className="section-anchor mx-auto max-w-5xl px-6 pb-16 pt-10 sm:px-8 md:pb-20 md:pt-12"
       >
         <p className="eyebrow">{about.heading}</p>
         <h2 className="section-title mt-3">Hi, I&apos;m {about.name}</h2>
@@ -144,6 +117,12 @@ export default function Home() {
                             {pkg.note}
                           </p>
                         ) : null}
+                        <Link
+                          href={packageBookHref(category.label, pkg.name)}
+                          className="btn-primary mt-5 inline-block !px-5 !py-2.5 text-sm"
+                        >
+                          Request this package
+                        </Link>
                       </div>
                       <div className="border-t border-stone-100 bg-stone-50/80 px-6 py-3.5 sm:px-7">
                         <p className="eyebrow !text-[0.65rem]">
@@ -155,8 +134,27 @@ export default function Home() {
                     </li>
                   ))}
                 </ul>
+                {category.categoryNote ? (
+                  <p className="mt-4 text-sm leading-relaxed text-stone-500 sm:text-base">
+                    {category.categoryNote}
+                  </p>
+                ) : null}
               </div>
             ))}
+
+            <div
+              id="pricing-notes"
+              className="border-t border-stone-200/80 pt-10"
+            >
+              <h3 className="font-serif text-xl text-stone-900">
+                {pricingAdditionalInfo.heading}
+              </h3>
+              <ul className="mt-5 list-disc space-y-2.5 pl-5 text-sm leading-relaxed text-stone-600 marker:text-stone-400 sm:text-base">
+                {pricingAdditionalInfo.items.map((item) => (
+                  <li key={item.slice(0, 48)}>{item}</li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
@@ -169,10 +167,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl px-6 sm:px-8">
           <p className="eyebrow">{portfolio.eyebrow}</p>
           <h2 className="section-title mt-3">{portfolio.heading}</h2>
-          <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
-            {portfolio.body}
-          </p>
-          <div className="mt-12">
+          <div className="mt-10">
             <PortfolioCarousel />
           </div>
         </div>

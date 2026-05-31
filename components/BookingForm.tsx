@@ -1,6 +1,7 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 
 import TurnstileField, {
   type TurnstileFieldHandle,
@@ -8,8 +9,11 @@ import TurnstileField, {
 import {
   contactMethodOptions,
   packageInterestOptions,
+  packageInterestValues,
   sessionTypes,
+  sessionTypeValues,
   type ContactMethodValue,
+  type SessionTypeValue,
 } from "@/lib/booking-options";
 import type { FieldErrors } from "@/lib/booking-inquiry-validation";
 
@@ -50,7 +54,12 @@ const initialState: FormState = {
   message: "",
 };
 
+function isSessionTypeValue(value: string): value is SessionTypeValue {
+  return (sessionTypeValues as readonly string[]).includes(value);
+}
+
 export default function BookingForm() {
+  const searchParams = useSearchParams();
   const formStartedAtRef = useRef(Date.now());
   const turnstileRef = useRef<TurnstileFieldHandle>(null);
   const [honeypot, setHoneypot] = useState("");
@@ -62,6 +71,25 @@ export default function BookingForm() {
   const [submitted, setSubmitted] = useState(false);
 
   const showTurnstile = TURNSTILE_SITE_KEY.length > 0;
+
+  useEffect(() => {
+    const packageParam = searchParams.get("package");
+    const sessionParam = searchParams.get("session");
+    const hasPackage =
+      Boolean(packageParam) &&
+      packageInterestValues.includes(packageParam!);
+    const hasSession =
+      Boolean(sessionParam) && isSessionTypeValue(sessionParam!);
+
+    if (!hasPackage && !hasSession) return;
+
+    setForm((prev) => {
+      const next = { ...prev };
+      if (hasPackage) next.packageInterest = packageParam!;
+      if (hasSession) next.sessionType = sessionParam!;
+      return next;
+    });
+  }, [searchParams]);
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));

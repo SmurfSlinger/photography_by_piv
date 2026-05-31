@@ -22,8 +22,8 @@ export const sessionTypes = [
 export const packageInterestOptions = [
   ...pricingCategories.flatMap((category) =>
     category.packages.map((pkg) => ({
-      value: `${category.label} — ${pkg.name}`,
-      label: `${category.label} — ${pkg.name}`,
+      value: `${category.label} - ${pkg.name}`,
+      label: `${category.label} - ${pkg.name}`,
     }))
   ),
   { value: "Not sure yet", label: "Not sure yet" },
@@ -38,3 +38,35 @@ export type SessionTypeValue = (typeof sessionTypes)[number]["value"];
 export const packageInterestValues = packageInterestOptions.map(
   (option) => option.value
 );
+
+export const sessionTypeValues = sessionTypes.map((type) => type.value);
+
+export function packageInterestLabel(
+  categoryLabel: string,
+  packageName: string
+): string {
+  return `${categoryLabel} - ${packageName}`;
+}
+
+export function sessionTypeForPackage(
+  categoryLabel: string,
+  packageName: string
+): SessionTypeValue {
+  if (categoryLabel === "Weddings") return "wedding";
+  if (categoryLabel === "Events") return "other";
+  if (packageName.startsWith("Family")) return "family";
+  if (packageName.startsWith("Portraits")) return "portrait";
+  if (packageName.startsWith("Couples")) return "couples";
+  return "other";
+}
+
+export function packageBookHref(
+  categoryLabel: string,
+  packageName: string
+): string {
+  const params = new URLSearchParams({
+    package: packageInterestLabel(categoryLabel, packageName),
+    session: sessionTypeForPackage(categoryLabel, packageName),
+  });
+  return `/book?${params.toString()}`;
+}

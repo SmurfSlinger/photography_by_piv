@@ -51,8 +51,6 @@ export default function PortfolioCarousel({
     return null;
   }
 
-  const photo = photos[index];
-
   return (
     <div className="relative mx-auto w-full max-w-md">
       <div
@@ -61,15 +59,20 @@ export default function PortfolioCarousel({
         onTouchEnd={handleTouchEnd}
       >
         <div className="pointer-events-none absolute inset-0">
-          <Image
-            key={index}
-            src={photo.src}
-            alt={photo.alt}
-            fill
-            className="object-cover transition-opacity duration-300"
-            sizes="(max-width: 448px) 100vw, 448px"
-            priority={index === 0}
-          />
+          {photos.map((photo, i) => (
+            <Image
+              key={photo.src}
+              src={photo.src}
+              alt={photo.alt}
+              fill
+              className={`object-cover transition-opacity duration-500 ease-in-out motion-reduce:transition-none ${
+                i === index ? "opacity-100" : "opacity-0"
+              }`}
+              sizes="(max-width: 448px) 100vw, 448px"
+              priority={i === 0}
+              aria-hidden={i !== index}
+            />
+          ))}
         </div>
 
         {count > 1 && (
