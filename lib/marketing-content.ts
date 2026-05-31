@@ -22,7 +22,7 @@ export const navLinks = [
 export const bookPage = {
   eyebrow: "Request to Book",
   heading: "Tell me about your session",
-  body: "Share a few details about what you are looking for—date, location, and the vibe you have in mind. I will reply with availability and next steps, usually within one to two business days.",
+  body: "Use this form to share what you are looking for—date, location, and the vibe you have in mind. I will reply with availability and next steps, usually within one to two business days.",
 } as const;
 
 export const intro = {
@@ -196,8 +196,9 @@ export const pricing = {
     "Every session is a little different. These collections are a starting point—reach out and we will tailor something that fits your day and your budget.",
 } as const;
 
+/** Public copy only — do not put the business email address in this file. */
 export const contact = {
   eyebrow: "Request to Book",
   heading: "Ready to book?",
-  body: "Tell me about your session, date, and vision. I will reply with availability and next steps—usually within one to two business days.",
+  body: "Use the Request to Book form to share your session, date, and vision. I will reply with availability and next steps—usually within one to two business days.",
 } as const;

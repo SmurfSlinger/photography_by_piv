@@ -64,7 +64,8 @@ export async function POST(request: Request) {
       },
     });
 
-    // TODO: email notification to Piv when SMTP/Resend is configured.
+    // TODO: send inquiry notification when mail is configured — use
+    // getBookingNotificationEmail() from lib/booking-notification.ts (BOOKING_NOTIFICATION_EMAIL).
 
     return NextResponse.json({ ok: true, id: inquiry.id });
   } catch (error) {
