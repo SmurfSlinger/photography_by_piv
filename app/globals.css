@@ -80,6 +80,109 @@ body {
   outline-offset: 3px;
 }
 
-.scroll-hint {
-  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+.form-field label {
+  display: block;
+  margin-bottom: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #44403c;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #d6d3d1;
+  background-color: #fff;
+  padding: 0.625rem 0.875rem;
+  font-size: 1rem;
+  color: #292524;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(92 107 74 / 0.15);
+}
+
+.form-field input[aria-invalid="true"],
+.form-field select[aria-invalid="true"],
+.form-field textarea[aria-invalid="true"] {
+  border-color: #b91c1c;
+}
+
+.form-legend {
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #44403c;
+}
+
+.form-radio {
+  display: inline-flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  color: #44403c;
+}
+
+.form-radio input {
+  accent-color: var(--accent);
+}
+
+.contact-option {
+  border-radius: 0.75rem;
+  border: 1px solid #e7e5e4;
+  background-color: #fff;
+  padding: 0.875rem 1rem;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.contact-option--active {
+  border-color: rgb(92 107 74 / 0.45);
+  box-shadow: 0 0 0 1px rgb(92 107 74 / 0.12);
+}
+
+.contact-option__label {
+  display: flex;
+  cursor: pointer;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #44403c;
+}
+
+.contact-option__label input {
+  accent-color: var(--accent);
+}
+
+.contact-option__detail {
+  margin-top: 0.75rem;
+  margin-left: 1.75rem;
+  padding-left: 0.75rem;
+  border-left: 2px solid #e7e5e4;
+}
+
+.contact-option__hint {
+  margin-top: 0.5rem;
+  margin-left: 1.75rem;
+  padding-left: 0.75rem;
+  font-size: 0.875rem;
+  color: #78716c;
+}
+
+.hp-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+  pointer-events: none;
 }

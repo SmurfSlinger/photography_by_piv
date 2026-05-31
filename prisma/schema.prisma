@@ -13,6 +13,21 @@ enum GalleryStatus {
   archived
 }
 
+enum SessionType {
+  wedding
+  couples
+  family
+  portrait
+  other
+}
+
+enum InquiryStatus {
+  new
+  contacted
+  booked
+  closed
+}
+
 model Client {
   id        String    @id @default(uuid())
   name      String
@@ -65,4 +80,30 @@ model GalleryAccessToken {
 
   @@index([galleryId])
   @@map("gallery_access_tokens")
+}
+
+model BookingInquiry {
+  id                     String                 @id @default(uuid())
+  createdAt              DateTime               @default(now()) @map("created_at")
+  name                   String
+  contactMethods         String[]               @map("contact_methods")
+  email                  String?
+  phone                  String?
+  instagramHandle        String?                @map("instagram_handle")
+  contactOther           String?                @map("contact_other")
+  sessionType            SessionType            @map("session_type")
+  sessionTypeOther       String?                @map("session_type_other")
+  packageInterest        String                 @map("package_interest")
+  preferredDate          DateTime?              @db.Date @map("preferred_date")
+  backupDate             DateTime?              @db.Date @map("backup_date")
+  locationIdea           String?                @map("location_idea")
+  vibeStyle              String?                @map("vibe_style")
+  message                String
+  status                 InquiryStatus          @default(new)
+  scheduledAt            DateTime?              @map("scheduled_at")
+  externalCalendarId     String?                @map("external_calendar_id")
+
+  @@index([createdAt])
+  @@index([status])
+  @@map("booking_inquiries")
 }

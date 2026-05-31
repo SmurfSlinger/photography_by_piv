@@ -1,6 +1,7 @@
 import Image from "next/image";
-import GalleryGrid from "@/components/GalleryGrid";
 import Navbar from "@/components/Navbar";
+import PortfolioCarousel from "@/components/PortfolioCarousel";
+import SpecialtyGrid from "@/components/SpecialtyGrid";
 import {
   about,
   bookCta,
@@ -32,7 +33,7 @@ export default function Home() {
         />
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900/45 via-stone-900/30 to-stone-900/50" />
         <div className="relative z-10 mx-auto max-w-4xl px-6 text-center text-white">
-          <p className="eyebrow text-white/85">{site.tagline}</p>
+          <p className="eyebrow !text-white/85">{site.tagline}</p>
           <h1 className="mt-5 font-serif text-5xl leading-tight tracking-wide sm:text-6xl md:text-7xl">
             {site.name}
           </h1>
@@ -45,45 +46,42 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Intro / specialties / quote */}
+      {/* Welcome + specialties */}
       <section
         id="intro"
-        className="section-anchor mx-auto max-w-3xl section-pad px-6 sm:px-8"
+        className="section-anchor py-20 md:py-24"
       >
-        <p className="eyebrow">{intro.eyebrow}</p>
-        <p className="mt-4 text-lg leading-relaxed text-stone-700 sm:text-xl">
-          {intro.bio}
-        </p>
-        <div className="mt-12">
-          <p className="eyebrow">Specialties</p>
-          <ul className="mt-5 flex flex-wrap gap-2.5">
-            {intro.specialties.map((item) => (
-              <li
-                key={item}
-                className={
-                  item === "Portraits"
-                    ? "rounded-full border border-[#5c6b4a]/40 bg-[#5c6b4a]/10 px-4 py-2 text-sm font-medium text-stone-800"
-                    : "rounded-full border border-stone-300/70 bg-[#faf7f2] px-4 py-2 text-sm text-stone-700"
-                }
-              >
-                {item}
-              </li>
-            ))}
-          </ul>
-          <p className="mt-4 text-sm leading-relaxed text-stone-600 italic">
-            {intro.portraitNote}
+        <div className="mx-auto max-w-3xl px-6 sm:px-8">
+          <p className="eyebrow">{intro.eyebrow}</p>
+          <p className="mt-4 text-lg leading-relaxed text-stone-700 sm:text-xl">
+            {intro.bio}
           </p>
         </div>
-        <blockquote className="mt-14 rounded-2xl border border-stone-200/80 bg-[#faf7f2] px-6 py-8 sm:px-8">
-          <p className="font-serif text-xl leading-relaxed text-stone-700 italic sm:text-2xl">
-            &ldquo;{intro.quote.text}&rdquo;
+
+        <div className="mx-auto mt-14 max-w-6xl px-6 sm:px-8">
+          <p className="eyebrow">Specialties</p>
+          <h2 className="section-title mt-3">Sessions I photograph</h2>
+          <p className="mt-4 max-w-2xl text-base leading-relaxed text-stone-600">
+            From quiet portraits to full wedding days—each session is guided
+            with care and an eye for the moments that matter.
           </p>
-          {intro.quote.attribution ? (
-            <footer className="mt-4 text-sm text-stone-500 not-italic">
-              {intro.quote.attribution}
-            </footer>
-          ) : null}
-        </blockquote>
+          <div className="mt-10">
+            <SpecialtyGrid />
+          </div>
+        </div>
+
+        <div className="mx-auto mt-14 max-w-3xl px-6 sm:px-8">
+          <blockquote className="rounded-2xl border border-stone-200/80 bg-[#faf7f2] px-6 py-8 sm:px-8">
+            <p className="font-serif text-xl leading-relaxed text-stone-700 italic sm:text-2xl">
+              &ldquo;{intro.quote.text}&rdquo;
+            </p>
+            {intro.quote.attribution ? (
+              <footer className="mt-4 text-sm text-stone-500 not-italic">
+                {intro.quote.attribution}
+              </footer>
+            ) : null}
+          </blockquote>
+        </div>
       </section>
 
       {/* About */}
@@ -163,9 +161,9 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Public work gallery */}
+      {/* Portfolio — single-photo carousel */}
       <section
-        id="work"
+        id="portfolio"
         className="section-anchor bg-[#e8dfd0]/50 py-20 md:py-24"
       >
         <div className="mx-auto max-w-6xl px-6 sm:px-8">
@@ -175,7 +173,7 @@ export default function Home() {
             {portfolio.body}
           </p>
           <div className="mt-12">
-            <GalleryGrid />
+            <PortfolioCarousel />
           </div>
         </div>
       </section>
@@ -191,7 +189,7 @@ export default function Home() {
           <p className="mx-auto mt-5 text-base leading-relaxed text-stone-600">
             {contact.body}
           </p>
-          <a href={contact.mailtoHref} className="btn-primary mt-10">
+          <a href={bookCta.href} className="btn-primary mt-10">
             {bookCta.label}
           </a>
         </div>

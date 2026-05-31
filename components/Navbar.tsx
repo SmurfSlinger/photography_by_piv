@@ -10,7 +10,7 @@ export default function Navbar() {
     <header className="fixed top-0 right-0 left-0 z-50 border-b border-stone-200/70 bg-[#f5f0e8]/95 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
         <a
-          href="#home"
+          href="/#home"
           className="font-serif text-sm tracking-[0.18em] text-stone-800 uppercase sm:text-[0.95rem]"
           onClick={() => setMenuOpen(false)}
         >

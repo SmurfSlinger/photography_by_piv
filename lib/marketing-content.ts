@@ -8,24 +8,27 @@ export const site = {
 
 export const bookCta = {
   label: "Request to Book",
-  href: "#contact",
+  href: "/book",
 } as const;
 
 export const navLinks = [
-  { label: "Home", href: "#home" },
-  { label: "Portfolio", href: "#work" },
-  { label: "About", href: "#about" },
-  { label: "Pricing", href: "#pricing" },
+  { label: "Home", href: "/#home" },
+  { label: "Portfolio", href: "/#portfolio" },
+  { label: "About", href: "/#about" },
+  { label: "Pricing", href: "/#pricing" },
   { label: bookCta.label, href: bookCta.href, isPrimary: true },
 ] as const;
+
+export const bookPage = {
+  eyebrow: "Request to Book",
+  heading: "Tell me about your session",
+  body: "Share a few details about what you are looking for—date, location, and the vibe you have in mind. I will reply with availability and next steps, usually within one to two business days.",
+} as const;
 
 export const intro = {
   eyebrow: "Welcome",
   /** Welcome voice: love of photography, meeting people, personality */
   bio: "Photography is how I connect—with light, with story, and especially with people. I love meeting new faces, hearing what matters to you, and creating a space where you can simply be yourself. Whether it is a quiet portrait or a full wedding day, my goal is to make you feel seen, celebrated, and at ease in front of the camera.",
-  specialties: ["Weddings", "Couples", "Families", "Portraits"] as const,
-  /** Shown below the specialty pills — Portraits is one of her favorites */
-  portraitNote: "Portraits are one of my absolute favorites—individual, couple, or creative.",
   /** Replace with Piv's own words when ready */
   quote: {
     text: "You don't take a photograph, you make it.",
@@ -33,11 +36,11 @@ export const intro = {
   },
 } as const;
 
-/** Public marketing portfolio only — swap src paths when Piv adds approved images under public/images/ */
-export const workPhotos = [
+/** Specialty tiles — swap src paths when Piv adds approved images under public/images/ */
+export const specialtyCards = [
   {
     src: "/images/hero.jpg",
-    alt: "Outdoor wedding photography in golden light",
+    alt: "Wedding photography in golden light",
     title: "Weddings",
     subtitle: "Ceremony, portraits & celebration",
   },
@@ -57,15 +60,34 @@ export const workPhotos = [
     src: "/images/hero.jpg",
     alt: "Portrait photography session",
     title: "Portraits",
-    subtitle: "A favorite — individual & creative sessions",
+    subtitle: "Individual, couple & creative sessions",
+  },
+] as const;
+
+/** Portfolio carousel — image only (no on-slide captions) */
+export const portfolioPhotos = [
+  {
+    src: "/images/hero.jpg",
+    alt: "Sample portfolio photograph one",
+  },
+  {
+    src: "/images/hero.jpg",
+    alt: "Sample portfolio photograph two",
+  },
+  {
+    src: "/images/hero.jpg",
+    alt: "Sample portfolio photograph three",
+  },
+  {
+    src: "/images/hero.jpg",
+    alt: "Sample portfolio photograph four",
   },
 ] as const;
 
 export const portfolio = {
   eyebrow: "Portfolio",
   heading: "A glimpse of my work",
-  body: "Swipe through a few of the moments and moods I love to capture. Your gallery will be curated with the same care and warmth.",
-  scrollHint: "Swipe to browse · Sample images shown",
+  body: "Browse a few favorite frames. Use the arrows or swipe on mobile to see more.",
 } as const;
 
 export const about = {
@@ -178,6 +200,4 @@ export const contact = {
   eyebrow: "Request to Book",
   heading: "Ready to book?",
   body: "Tell me about your session, date, and vision. I will reply with availability and next steps—usually within one to two business days.",
-  mailtoHref:
-    "mailto:hello@photographybypiv.com?subject=Session%20inquiry",
 } as const;
