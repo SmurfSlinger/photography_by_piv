@@ -41,7 +41,7 @@ export default function Navbar() {
 
         <button
           type="button"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-300/80 text-stone-800 md:hidden"
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-stone-300/80 text-stone-800 md:hidden"
           aria-expanded={menuOpen}
           aria-label={menuOpen ? "Close menu" : "Open menu"}
           onClick={() => setMenuOpen((open) => !open)}
@@ -73,7 +73,7 @@ export default function Navbar() {
                   className={
                     "isPrimary" in link && link.isPrimary
                       ? "btn-primary mt-3 w-full"
-                      : "block rounded-lg px-2 py-2.5 text-base text-stone-700 hover:bg-stone-100/80"
+                      : "flex min-h-11 items-center rounded-lg px-3 py-2 text-base text-stone-700 hover:bg-stone-100/80"
                   }
                   onClick={() => setMenuOpen(false)}
                 >

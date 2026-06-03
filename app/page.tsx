@@ -119,13 +119,13 @@ export default function Home() {
                         ) : null}
                         <Link
                           href={packageBookHref(category.label, pkg.name)}
-                          className="btn-primary mt-5 inline-block !px-5 !py-2.5 text-sm"
+                          className="btn-primary mt-5 inline-flex min-h-11 items-center !px-5 !py-2.5 text-sm md:inline-block"
                         >
                           Request this package
                         </Link>
                       </div>
                       <div className="border-t border-stone-100 bg-stone-50/80 px-6 py-3.5 sm:px-7">
-                        <p className="eyebrow !text-[0.65rem]">
+                        <p className="eyebrow !text-xs md:!text-[0.65rem]">
                           {pkg.priceFrom.startsWith("$")
                             ? `Starting at ${pkg.priceFrom}`
                             : pkg.priceFrom}

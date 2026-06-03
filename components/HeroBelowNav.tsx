@@ -5,7 +5,7 @@ import { bookCta, site } from "@/lib/marketing-content";
 export default function HeroBelowNav() {
   return (
     <section id="home" className="section-anchor pt-16">
-      <div className="relative flex min-h-[calc(92vh-4rem)] max-h-[836px] items-center justify-center overflow-hidden">
+      <div className="relative flex min-h-[min(520px,calc(68vh-4rem))] max-h-[min(600px,calc(72vh-4rem))] items-center justify-center overflow-hidden md:min-h-[calc(92vh-4rem)] md:max-h-[836px]">
         <Image
           src={site.heroImage}
           alt="Photography by Piv — portrait and wedding photography"
@@ -17,7 +17,7 @@ export default function HeroBelowNav() {
         <div className="absolute inset-0 bg-gradient-to-b from-stone-900/45 via-stone-900/30 to-stone-900/50" />
         <div className="relative z-10 mx-auto max-w-4xl px-6 text-center text-white">
           <p className="eyebrow !text-white/85">{site.tagline}</p>
-          <h1 className="mt-5 font-serif text-5xl leading-tight tracking-wide sm:text-6xl md:text-7xl">
+          <h1 className="mt-5 font-serif text-4xl leading-tight tracking-wide sm:text-5xl md:text-7xl">
             {site.name}
           </h1>
           <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/90 sm:text-lg">

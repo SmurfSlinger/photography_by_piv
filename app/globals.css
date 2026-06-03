@@ -150,12 +150,19 @@ body {
 
 .contact-option__label {
   display: flex;
+  min-height: 2.75rem;
   cursor: pointer;
   align-items: center;
   gap: 0.625rem;
   font-size: 0.9375rem;
   font-weight: 500;
   color: #44403c;
+}
+
+@media (min-width: 768px) {
+  .contact-option__label {
+    min-height: 0;
+  }
 }
 
 .contact-option__label input {

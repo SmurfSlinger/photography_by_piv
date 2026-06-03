@@ -1,22 +1,76 @@
 "use client";
 
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { portfolioPhotos } from "@/lib/marketing-content";
 
-const arrowClass =
-  "pointer-events-auto absolute top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-stone-300/80 bg-[#faf7f2]/95 text-stone-600 shadow-sm backdrop-blur-sm transition-colors hover:border-stone-400 hover:bg-white hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a] max-md:hidden";
+const AXIS_RATIO = 1.3;
+const SWIPE_MIN_PX = 40;
+const AXIS_LOCK_PX = 15;
+
+const arrowBase =
+  "pointer-events-auto absolute top-1/2 z-20 flex -translate-y-1/2 items-center justify-center rounded-full border border-stone-300/80 text-stone-600 shadow-sm backdrop-blur-sm transition-colors hover:border-stone-400 hover:bg-white hover:text-stone-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a]";
+
+const desktopArrowClass = `${arrowBase} h-10 w-10 bg-[#faf7f2]/95 max-md:hidden`;
+const mobileArrowClass = `${arrowBase} h-11 w-11 bg-[#faf7f2]/90 md:hidden`;
+
+type GestureAxis = "none" | "horizontal" | "vertical";
 
 type PortfolioCarouselProps = {
   photos?: readonly { src: string; alt: string }[];
 };
+
+function CarouselArrow({
+  direction,
+  className,
+  onClick,
+}: {
+  direction: "previous" | "next";
+  className: string;
+  onClick: (event: React.MouseEvent<HTMLButtonElement>) => void;
+}) {
+  const isPrevious = direction === "previous";
+  return (
+    <button
+      type="button"
+      className={className}
+      aria-label={
+        isPrevious
+          ? "Show previous portfolio photo"
+          : "Show next portfolio photo"
+      }
+      onClick={onClick}
+    >
+      <svg
+        className="h-4 w-4"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.75}
+        aria-hidden
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d={isPrevious ? "M15 18l-6-6 6-6" : "M9 18l6-6-6-6"}
+        />
+      </svg>
+    </button>
+  );
+}
 
 export default function PortfolioCarousel({
   photos = portfolioPhotos,
 }: PortfolioCarouselProps = {}) {
   const [index, setIndex] = useState(0);
   const count = photos.length;
+  const trackRef = useRef<HTMLDivElement>(null);
+  const gestureRef = useRef({
+    startX: 0,
+    startY: 0,
+    axis: "none" as GestureAxis,
+  });
 
   function showPrevious() {
     if (count === 0) return;
@@ -28,24 +82,111 @@ export default function PortfolioCarousel({
     setIndex((current) => (current + 1) % count);
   }
 
-  function handleTouchStart(event: React.TouchEvent) {
-    const touch = event.touches[0];
-    (event.currentTarget as HTMLElement).dataset.touchStartX = String(
-      touch.clientX
-    );
+  function lockAxis(deltaX: number, deltaY: number): GestureAxis {
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    if (absX > absY * AXIS_RATIO && absX > AXIS_LOCK_PX) {
+      return "horizontal";
+    }
+    if (absY > absX * AXIS_RATIO && absY > AXIS_LOCK_PX) {
+      return "vertical";
+    }
+    return "none";
   }
 
-  function handleTouchEnd(event: React.TouchEvent) {
-    const startX = Number(
-      (event.currentTarget as HTMLElement).dataset.touchStartX
-    );
-    const endX = event.changedTouches[0].clientX;
-    const delta = startX - endX;
-
-    if (Math.abs(delta) < 40) return;
-    if (delta > 0) showNext();
-    else showPrevious();
+  function isHorizontalSwipe(deltaX: number, deltaY: number): boolean {
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+    return absX > absY * AXIS_RATIO && absX > SWIPE_MIN_PX;
   }
+
+  function applySwipe(deltaX: number) {
+    if (deltaX < 0) {
+      showNext();
+    } else {
+      showPrevious();
+    }
+  }
+
+  function handleArrowClick(
+    event: React.MouseEvent<HTMLButtonElement>,
+    action: () => void
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    action();
+  }
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el || count <= 1) {
+      return;
+    }
+
+    function resetGesture() {
+      gestureRef.current.axis = "none";
+    }
+
+    function onTouchStart(event: TouchEvent) {
+      const touch = event.touches[0];
+      gestureRef.current.startX = touch.clientX;
+      gestureRef.current.startY = touch.clientY;
+      gestureRef.current.axis = "none";
+    }
+
+    function onTouchMove(event: TouchEvent) {
+      const touch = event.touches[0];
+      const deltaX = touch.clientX - gestureRef.current.startX;
+      const deltaY = touch.clientY - gestureRef.current.startY;
+
+      if (gestureRef.current.axis === "none") {
+        const locked = lockAxis(deltaX, deltaY);
+        if (locked !== "none") {
+          gestureRef.current.axis = locked;
+        }
+      }
+
+      if (gestureRef.current.axis === "horizontal") {
+        event.preventDefault();
+      }
+    }
+
+    function onTouchEnd(event: TouchEvent) {
+      const touch = event.changedTouches[0];
+      const deltaX = touch.clientX - gestureRef.current.startX;
+      const deltaY = touch.clientY - gestureRef.current.startY;
+      const { axis } = gestureRef.current;
+
+      if (axis === "vertical") {
+        resetGesture();
+        return;
+      }
+
+      if (axis === "horizontal" || isHorizontalSwipe(deltaX, deltaY)) {
+        if (isHorizontalSwipe(deltaX, deltaY)) {
+          applySwipe(deltaX);
+        }
+      }
+
+      resetGesture();
+    }
+
+    function onTouchCancel() {
+      resetGesture();
+    }
+
+    el.addEventListener("touchstart", onTouchStart, { passive: true });
+    el.addEventListener("touchmove", onTouchMove, { passive: false });
+    el.addEventListener("touchend", onTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", onTouchCancel, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onTouchStart);
+      el.removeEventListener("touchmove", onTouchMove);
+      el.removeEventListener("touchend", onTouchEnd);
+      el.removeEventListener("touchcancel", onTouchCancel);
+    };
+  }, [count]);
 
   if (count === 0) {
     return null;
@@ -54,9 +195,8 @@ export default function PortfolioCarousel({
   return (
     <div className="relative mx-auto w-full max-w-md">
       <div
-        className="relative aspect-[4/5] w-full overflow-hidden rounded-2xl bg-stone-200/40 ring-1 ring-stone-200/70"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
+        ref={trackRef}
+        className="relative aspect-[4/5] w-full touch-pan-y overflow-hidden rounded-2xl bg-stone-200/40 ring-1 ring-stone-200/70"
       >
         <div className="pointer-events-none absolute inset-0">
           {photos.map((photo, i) => (
@@ -77,82 +217,66 @@ export default function PortfolioCarousel({
 
         {count > 1 && (
           <>
-            <button
-              type="button"
-              className={`${arrowClass} left-3 sm:left-4`}
-              aria-label="Show previous portfolio photo"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                showPrevious();
-              }}
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 18l-6-6 6-6"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className={`${arrowClass} right-3 sm:right-4`}
-              aria-label="Show next portfolio photo"
-              onClick={(event) => {
-                event.preventDefault();
-                event.stopPropagation();
-                showNext();
-              }}
-            >
-              <svg
-                className="h-4 w-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.75}
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M9 18l6-6-6-6"
-                />
-              </svg>
-            </button>
+            <CarouselArrow
+              direction="previous"
+              className={`${desktopArrowClass} left-3 sm:left-4`}
+              onClick={(event) => handleArrowClick(event, showPrevious)}
+            />
+            <CarouselArrow
+              direction="next"
+              className={`${desktopArrowClass} right-3 sm:right-4`}
+              onClick={(event) => handleArrowClick(event, showNext)}
+            />
+            <CarouselArrow
+              direction="previous"
+              className={`${mobileArrowClass} left-2`}
+              onClick={(event) => handleArrowClick(event, showPrevious)}
+            />
+            <CarouselArrow
+              direction="next"
+              className={`${mobileArrowClass} right-2`}
+              onClick={(event) => handleArrowClick(event, showNext)}
+            />
           </>
         )}
       </div>
 
       {count > 1 && (
-        <div
-          className="mt-4 flex justify-center gap-2"
-          aria-label={`Portfolio photo ${index + 1} of ${count}`}
-          role="tablist"
-        >
-          {photos.map((_, i) => (
-            <button
-              key={i}
-              type="button"
-              role="tab"
-              aria-selected={i === index}
-              aria-label={`Show portfolio photo ${i + 1}`}
-              onClick={() => setIndex(i)}
-              className={`h-2 rounded-full transition-all ${
-                i === index
-                  ? "w-6 bg-[#5c6b4a]"
-                  : "w-2 bg-stone-300 hover:bg-stone-400"
-              }`}
-            />
-          ))}
-        </div>
+        <>
+          <p
+            className="mt-4 text-center text-xs tracking-wide text-stone-500 md:hidden"
+            aria-live="polite"
+            aria-atomic="true"
+          >
+            Swipe to see more · {index + 1} / {count}
+          </p>
+          <div
+            className="mt-4 hidden flex-wrap justify-center gap-0 md:flex"
+            aria-label={`Portfolio photo ${index + 1} of ${count}`}
+            role="tablist"
+          >
+            {photos.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                role="tab"
+                aria-selected={i === index}
+                aria-label={`Show portfolio photo ${i + 1}`}
+                onClick={() => setIndex(i)}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a]"
+              >
+                <span
+                  aria-hidden
+                  className={`block rounded-full transition-all ${
+                    i === index
+                      ? "h-2 w-6 bg-[#5c6b4a]"
+                      : "h-2 w-2 bg-stone-300 hover:bg-stone-400"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

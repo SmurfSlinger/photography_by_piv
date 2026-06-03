@@ -92,7 +92,11 @@ const TurnstileField = forwardRef<TurnstileFieldHandle, TurnstileFieldProps>(
           strategy="afterInteractive"
           onLoad={() => setScriptReady(true)}
         />
-        <div ref={containerRef} className="min-h-[65px]" aria-hidden={false} />
+        <div
+          ref={containerRef}
+          className="min-h-[65px] max-w-full overflow-x-auto"
+          aria-hidden={false}
+        />
       </>
     );
   }
