@@ -5,6 +5,8 @@ Wants=docker.service
 
 [Service]
 Type=simple
+User=smurfslinger
+Group=smurfslinger
 WorkingDirectory=/home/smurfslinger/photography_by_piv
 EnvironmentFile=/home/smurfslinger/photography_by_piv/.env
 Environment=NODE_ENV=production
