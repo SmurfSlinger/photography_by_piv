@@ -1,0 +1,18 @@
+[Unit]
+Description=Photography by Piv (Next.js)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/smurfslinger/photography_by_piv
+EnvironmentFile=/home/smurfslinger/photography_by_piv/.env
+Environment=NODE_ENV=production
+ExecStartPre=/bin/bash -c 'lsof -ti :3000 | xargs -r kill 2>/dev/null || true; sleep 1'
+# 0.0.0.0 so k3s Traefik pods can reach this host on port 3000 (still behind Traefik/443 publicly)
+ExecStart=/usr/bin/npm run start -- -H 0.0.0.0 -p 3000
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

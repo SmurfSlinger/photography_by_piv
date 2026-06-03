@@ -1,0 +1,43 @@
+# Traefik (k3s) route: photographybypiv.com → host Next.js on port 3000
+# Apply with: sudo bash deploy/traefik-apply.sh
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: photography-by-piv
+  namespace: default
+spec:
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: photography-by-piv
+  namespace: default
+subsets:
+  - addresses:
+      - ip: __HOST_IP__
+    ports:
+      - name: http
+        port: 3000
+        protocol: TCP
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: photography-by-piv
+  namespace: default
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - match: Host(`photographybypiv.com`) || Host(`www.photographybypiv.com`)
+      kind: Rule
+      services:
+        - name: photography-by-piv
+          port: 3000
+  tls: {}
