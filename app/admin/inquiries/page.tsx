@@ -3,9 +3,9 @@ import { redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import InquiryList from "@/components/admin/InquiryList";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
-import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { inquiriesWithSpam } from "@/lib/booking-inquiry-display";
 import { prisma } from "@/lib/prisma";
 

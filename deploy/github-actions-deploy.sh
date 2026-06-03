@@ -11,8 +11,27 @@ git fetch origin master
 git checkout master
 git pull --ff-only origin master
 
-echo "==> npm ci"
-npm ci
+DEPS_CACHE_DIR="${REPO}/.deploy-cache"
+DEPS_HASH_FILE="${DEPS_CACHE_DIR}/deps.sha256"
+mkdir -p "${DEPS_CACHE_DIR}"
+CURRENT_DEPS_HASH="$(
+  sha256sum package.json package-lock.json | sha256sum | awk '{print $1}'
+)"
+PREVIOUS_DEPS_HASH="$(cat "${DEPS_HASH_FILE}" 2>/dev/null || true)"
+
+echo "==> Dependencies"
+if [ ! -d node_modules ] || [ "${CURRENT_DEPS_HASH}" != "${PREVIOUS_DEPS_HASH}" ]; then
+  if [ ! -d node_modules ]; then
+    echo "    node_modules missing — running npm ci"
+  else
+    echo "    package.json or package-lock.json changed — running npm ci"
+  fi
+  npm ci
+  echo "${CURRENT_DEPS_HASH}" > "${DEPS_HASH_FILE}"
+else
+  echo "    Unchanged (sha256 ${CURRENT_DEPS_HASH}); skipping npm ci"
+  echo "    Prisma client will refresh during npm run build"
+fi
 
 echo "==> Load production .env (clear inherited Turnstile test keys first)"
 unset NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY
@@ -24,8 +43,35 @@ set +a
 echo "==> Database migrations"
 npm run db:deploy
 
+NEXT_CACHE_STAGING="/tmp/pbp-next-cache"
+
+echo "==> Preserve Next build cache (optional, speeds up build)"
+rm -rf "${NEXT_CACHE_STAGING}"
+if [ -d .next/cache ]; then
+  if mkdir -p "${NEXT_CACHE_STAGING}" && cp -a .next/cache "${NEXT_CACHE_STAGING}/cache"; then
+    echo "    Saved .next/cache to ${NEXT_CACHE_STAGING}"
+  else
+    echo "WARN: Could not preserve .next/cache — continuing with cold build"
+    rm -rf "${NEXT_CACHE_STAGING}"
+  fi
+else
+  echo "    No .next/cache present (cold build)"
+fi
+
 echo "==> Clean build output"
 rm -rf .next
+
+echo "==> Restore Next build cache"
+if [ -d "${NEXT_CACHE_STAGING}/cache" ]; then
+  if mkdir -p .next && cp -a "${NEXT_CACHE_STAGING}/cache" .next/cache; then
+    echo "    Restored .next/cache"
+  else
+    echo "WARN: Could not restore .next/cache — continuing with cold build"
+  fi
+  rm -rf "${NEXT_CACHE_STAGING}"
+else
+  echo "    Nothing to restore"
+fi
 
 echo "==> Production build"
 export NODE_ENV=production

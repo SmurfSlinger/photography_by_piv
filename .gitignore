@@ -92,3 +92,6 @@ copy-2-dirs-to-d.sh
 *.log
 # GitHub Actions self-hosted runner runtime
 /actions-runner/
+
+# Local database backups
+/backups/

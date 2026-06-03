@@ -9,6 +9,7 @@
 import type { BookingInquiry } from "@prisma/client";
 import { SessionType } from "@prisma/client";
 
+import { spamAssessmentForInquiry } from "../lib/booking-inquiry-display";
 import { scoreBookingInquiryForNotification } from "../lib/booking-spam-filter";
 import type { BookingInquiryInput } from "../lib/booking-inquiry-validation";
 import {
@@ -26,6 +27,9 @@ const FLAGGED_TEST_MESSAGE =
   "See https://example-spam.test and https://fake-offer.test for details.";
 
 function buildSampleInquiry(flagged: boolean): BookingInquiry {
+  const input = toSpamInputFromFixture(flagged);
+  const spam = scoreBookingInquiryForNotification(input);
+
   return {
     id: "00000000-0000-4000-8000-000000000001",
     createdAt: new Date(),
@@ -48,25 +52,30 @@ function buildSampleInquiry(flagged: boolean): BookingInquiry {
     status: "new",
     scheduledAt: null,
     externalCalendarId: null,
+    spamScore: spam.score,
+    spamReasons: spam.reasons,
+    spamFlagged: spam.flagged,
   };
 }
 
-function toSpamInput(inquiry: BookingInquiry): BookingInquiryInput {
+function toSpamInputFromFixture(flagged: boolean): BookingInquiryInput {
   return {
-    name: inquiry.name,
-    contactMethods: inquiry.contactMethods,
-    email: inquiry.email,
-    phone: inquiry.phone,
-    instagramHandle: inquiry.instagramHandle,
-    contactOther: inquiry.contactOther,
-    sessionType: inquiry.sessionType,
-    sessionTypeOther: inquiry.sessionTypeOther,
-    packageInterest: inquiry.packageInterest,
-    preferredDate: inquiry.preferredDate,
-    backupDate: inquiry.backupDate,
-    locationIdea: inquiry.locationIdea,
-    vibeStyle: inquiry.vibeStyle,
-    message: inquiry.message,
+    name: "Test Client",
+    contactMethods: ["email", "text"],
+    email: "client@example.com",
+    phone: "+1 555 0100",
+    instagramHandle: "@exampleclient",
+    contactOther: null,
+    sessionType: SessionType.wedding,
+    sessionTypeOther: null,
+    packageInterest: "Weddings - Timeless Wedding Package",
+    preferredDate: new Date("2026-09-15T12:00:00.000Z"),
+    backupDate: new Date("2026-09-22T12:00:00.000Z"),
+    locationIdea: "Tremonton area park",
+    vibeStyle: "Golden hour, candid moments",
+    message: flagged
+      ? FLAGGED_TEST_MESSAGE
+      : "This is a test booking inquiry notification.",
   };
 }
 
@@ -85,7 +94,7 @@ async function main() {
   }
 
   const inquiry = buildSampleInquiry(showFlagged);
-  const spam = scoreBookingInquiryForNotification(toSpamInput(inquiry));
+  const spam = spamAssessmentForInquiry(inquiry);
   const preview = buildBookingInquiryEmailContent(inquiry, spam);
 
   console.log("\nFlagged:", spam.flagged, "| Score:", spam.score);

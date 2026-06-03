@@ -69,13 +69,37 @@ Replace `smurfslinger` if the runner uses a different account.
 
 Never commit `.env` or add these to GitHub Secrets for deploy.
 
+## Deploy caching (R310 runner)
+
+`github-actions-deploy.sh` keeps local state under `.deploy-cache/` (not committed; add to `.gitignore` if desired).
+
+**Dependencies:** After `git pull`, compares a sha256 of `package.json` + `package-lock.json` to `.deploy-cache/deps.sha256`. Runs `npm ci` only when `node_modules` is missing or the hash changed. Otherwise skips `npm ci` (~40s saved on typical deploys). `npm run build` still runs `prisma generate`.
+
+**Next build:** Preserves `.next/cache` via `/tmp/pbp-next-cache`, deletes `.next`, restores cache, then builds. Warns and cold-builds if copy fails.
+
+**Force a full dependency reinstall:**
+
+```bash
+cd /home/smurfslinger/photography_by_piv
+rm -f .deploy-cache/deps.sha256
+rm -rf node_modules
+bash --norc --noprofile deploy/github-actions-deploy.sh
+```
+
+**Force a cold Next build (keep deps):**
+
+```bash
+rm -rf .next /tmp/pbp-next-cache
+bash --norc --noprofile deploy/github-actions-deploy.sh
+```
+
 ## Build safety (Turnstile)
 
 `github-actions-deploy.sh`:
 
 - `unset NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY` before `source .env`
-- `rm -rf .next` then `NODE_ENV=production npm run build`
-- Fails if Cloudflare **test** site key prefix `1x00000000000000000000` appears under `.next/`
+- `NODE_ENV=production npm run build`
+- Fails if Cloudflare **test** site key prefix `1x00000000000000000000` appears under final `.next/` output
 
 The workflow runs the script with `bash --norc --noprofile` so the runner’s login environment cannot override `.env` during build.
 

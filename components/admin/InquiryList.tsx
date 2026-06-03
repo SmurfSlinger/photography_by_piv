@@ -26,69 +26,110 @@ function Field({
   );
 }
 
-function InquiryCard({ inquiry, spam }: InquiryWithSpam) {
-  return (
-    <article className="rounded-xl border border-stone-200/80 bg-white p-5 shadow-sm sm:p-6">
-      <header className="flex flex-col gap-3 border-b border-stone-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <h2 className="font-serif text-xl text-stone-900">{inquiry.name}</h2>
-          <p className="mt-1 font-mono text-xs text-stone-500">
-            {formatInquiryDateTime(inquiry.createdAt)}
-          </p>
-          <p className="mt-1 break-all font-mono text-xs text-stone-400">
-            ID {inquiry.id}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-medium text-stone-700">
-            {inquiry.status}
-          </span>
-          {spam.flagged ? (
-            <span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900">
-              Possible spam · score {spam.score}
-            </span>
-          ) : (
-            <span className="rounded-full border border-stone-200 px-3 py-1 text-xs text-stone-600">
-              Score {spam.score}
-            </span>
-          )}
-        </div>
-      </header>
+function InquiryDetails({ item }: { item: InquiryWithSpam }) {
+  const { inquiry, spam, spamSource } = item;
 
+  return (
+    <div className="border-t border-stone-100 px-4 pb-5 pt-4 sm:px-5">
       {spam.flagged && spam.reasons.length > 0 ? (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3">
+        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-            Spam / scam signals (recomputed from saved inquiry)
+            Spam / scam signals
+            {spamSource === "recomputed" ? " (recomputed — pre-migration inquiry)" : ""}
           </p>
           <ul className="mt-2 list-inside list-disc text-sm text-amber-950">
             {spam.reasons.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}
           </ul>
-          <p className="mt-2 text-xs text-amber-800/90">
-            IP-based rules are not shown here because the client IP is not stored.
-          </p>
+          {spamSource === "recomputed" ? (
+            <p className="mt-2 text-xs text-amber-800/90">
+              IP-based rules may be omitted because the client IP was not stored.
+            </p>
+          ) : null}
         </div>
       ) : null}
 
-      <dl className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <Field label="Contact methods" value={contactMethodsLabel(inquiry.contactMethods)} />
+      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Email" value={inquiry.email} />
         <Field label="Phone" value={inquiry.phone} />
         <Field label="Instagram" value={inquiry.instagramHandle} />
         <Field label="Other contact" value={inquiry.contactOther} />
-        <Field label="Session type" value={sessionTypeLabel(inquiry)} />
         <Field label="Package interest" value={inquiry.packageInterest} />
         <Field label="Preferred date" value={formatInquiryDate(inquiry.preferredDate)} />
         <Field label="Backup date" value={formatInquiryDate(inquiry.backupDate)} />
         <Field label="Location idea" value={inquiry.locationIdea} />
         <Field label="Vibe / style" value={inquiry.vibeStyle} />
+        <Field label="Status" value={inquiry.status} />
+        <Field
+          label="Spam score"
+          value={
+            spam.flagged
+              ? `${spam.score} (flagged)`
+              : String(spam.score)
+          }
+        />
       </dl>
 
       <div className="mt-4">
         <Field label="Message" value={inquiry.message} />
       </div>
-    </article>
+
+      <p className="mt-4 break-all font-mono text-xs text-stone-400">
+        ID {inquiry.id}
+      </p>
+    </div>
+  );
+}
+
+function InquiryRow({ item }: { item: InquiryWithSpam }) {
+  const { inquiry, spam } = item;
+  const preferred = formatInquiryDate(inquiry.preferredDate);
+  const preferredShort = preferred !== "—" ? preferred : null;
+
+  return (
+    <details className="group rounded-xl border border-stone-200/80 bg-white shadow-sm open:border-stone-300 open:shadow-md">
+      <summary className="flex cursor-pointer list-none items-start gap-3 rounded-xl px-4 py-4 transition hover:bg-stone-50/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a] sm:px-5 [&::-webkit-details-marker]:hidden">
+        <span
+          className="mt-1 shrink-0 text-stone-400 transition group-open:rotate-90"
+          aria-hidden
+        >
+          ▶
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+            <h2 className="font-serif text-lg text-stone-900">{inquiry.name}</h2>
+            <time className="shrink-0 text-xs text-stone-500">
+              {formatInquiryDateTime(inquiry.createdAt)}
+            </time>
+          </div>
+          <p className="mt-1 text-sm text-stone-600">
+            {sessionTypeLabel(inquiry)}
+            {preferredShort ? (
+              <span className="text-stone-500"> · Pref. {preferredShort}</span>
+            ) : null}
+          </p>
+          <p className="mt-1 text-xs text-stone-500">
+            {contactMethodsLabel(inquiry.contactMethods)}
+          </p>
+        </div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5">
+          {spam.flagged ? (
+            <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">
+              Spam {spam.score}
+            </span>
+          ) : (
+            <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600">
+              OK
+            </span>
+          )}
+          <span className="text-xs text-[#5c6b4a] group-open:hidden">
+            Tap to expand
+          </span>
+        </div>
+      </summary>
+      <InquiryDetails item={item} />
+    </details>
   );
 }
 
@@ -102,10 +143,10 @@ export default function InquiryList({ items }: { items: InquiryWithSpam[] }) {
   }
 
   return (
-    <ul className="space-y-6">
+    <ul className="space-y-3">
       {items.map((item) => (
         <li key={item.inquiry.id}>
-          <InquiryCard inquiry={item.inquiry} spam={item.spam} />
+          <InquiryRow item={item} />
         </li>
       ))}
     </ul>

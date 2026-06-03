@@ -4,10 +4,7 @@ import { redirect } from "next/navigation";
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import AdminNavCard from "@/components/admin/AdminNavCard";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import {
-  formatInquiryDateTime,
-  spamAssessmentForInquiry,
-} from "@/lib/booking-inquiry-display";
+import { formatInquiryDateTime } from "@/lib/booking-inquiry-display";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -20,20 +17,22 @@ type DashboardSummary = {
 
 async function loadDashboardSummary(): Promise<DashboardSummary | null> {
   try {
-    const [totalInquiries, newest, allInquiries] = await Promise.all([
+    const [totalInquiries, newest] = await Promise.all([
       prisma.bookingInquiry.count(),
       prisma.bookingInquiry.findFirst({
         orderBy: { createdAt: "desc" },
         select: { createdAt: true },
       }),
-      prisma.bookingInquiry.findMany({
-        orderBy: { createdAt: "desc" },
-      }),
     ]);
 
-    const flaggedCount = allInquiries.filter(
-      (inquiry) => spamAssessmentForInquiry(inquiry).flagged
-    ).length;
+    let flaggedCount = 0;
+    try {
+      flaggedCount = await prisma.bookingInquiry.count({
+        where: { spamFlagged: true },
+      });
+    } catch (spamCountError) {
+      console.warn("admin dashboard spam count unavailable", spamCountError);
+    }
 
     return {
       totalInquiries,
@@ -96,7 +95,7 @@ export default async function AdminDashboardPage() {
             <p className="mt-2 font-serif text-2xl text-amber-950">
               {summary.flaggedCount}
             </p>
-            <p className="mt-1 text-xs text-amber-800/90">Recomputed from saved text</p>
+            <p className="mt-1 text-xs text-amber-800/90">Stored at submission</p>
           </div>
         </section>
       ) : (

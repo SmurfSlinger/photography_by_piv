@@ -62,16 +62,30 @@ export function sessionTypeLabel(inquiry: BookingInquiry): string {
   return sessionTypeLabels[inquiry.sessionType] ?? inquiry.sessionType;
 }
 
-/** Recomputed from stored fields (IP-based rules omitted — IP is not persisted). */
+/** Uses persisted assessment when present; otherwise recomputes (legacy rows). */
 export function spamAssessmentForInquiry(
   inquiry: BookingInquiry
 ): BookingSpamScoreResult {
+  if (inquiry.spamScore !== null) {
+    return {
+      score: inquiry.spamScore,
+      reasons: inquiry.spamReasons,
+      flagged: inquiry.spamFlagged,
+    };
+  }
   return scoreBookingInquiryForNotification(bookingInquiryToInput(inquiry));
+}
+
+export function spamAssessmentSource(
+  inquiry: BookingInquiry
+): "stored" | "recomputed" {
+  return inquiry.spamScore !== null ? "stored" : "recomputed";
 }
 
 export type InquiryWithSpam = {
   inquiry: BookingInquiry;
   spam: BookingSpamScoreResult;
+  spamSource: "stored" | "recomputed";
 };
 
 export function inquiriesWithSpam(
@@ -80,5 +94,7 @@ export function inquiriesWithSpam(
   return inquiries.map((inquiry) => ({
     inquiry,
     spam: spamAssessmentForInquiry(inquiry),
+    spamSource: spamAssessmentSource(inquiry),
   }));
 }
+

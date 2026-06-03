@@ -49,6 +49,9 @@ export async function POST(request: Request) {
 
   const data = result.data;
 
+  const clientIp = getClientIp(request);
+  const spam = scoreBookingInquiryForNotification(data, { clientIp });
+
   try {
     const inquiry = await prisma.bookingInquiry.create({
       data: {
@@ -66,11 +69,12 @@ export async function POST(request: Request) {
         locationIdea: data.locationIdea,
         vibeStyle: data.vibeStyle,
         message: data.message,
+        spamScore: spam.score,
+        spamReasons: spam.reasons,
+        spamFlagged: spam.flagged,
       },
     });
 
-    const clientIp = getClientIp(request);
-    const spam = scoreBookingInquiryForNotification(data, { clientIp });
     recordBookingInquirySubmission(clientIp);
 
     if (spam.flagged) {

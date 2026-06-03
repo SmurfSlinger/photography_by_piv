@@ -33,9 +33,13 @@ openssl rand -base64 32
 
 ## Spam / scam display
 
-Spam score and reasons are **not stored in Postgres**. The admin UI recomputes them from saved inquiry text using the same rules as notification email (see `lib/booking-spam-filter.ts`). Rules that depend on client IP are omitted in admin because IP is not persisted.
+New inquiries store `spamScore`, `spamReasons`, and `spamFlagged` at submission time (same assessment as notification email). The dashboard counts flagged rows from `spamFlagged`.
 
-No Prisma migration is required for v1.
+Inquiries saved **before** the spam migration have `spam_score` null; the admin list **recomputes** display-only assessment for those rows (IP rules still omitted).
+
+Migration: `20250603220000_booking_inquiry_spam_assessment`
+
+The inquiry list is **collapsed by default** (native `<details>` rows). Tap a row to expand full contact info, message, and spam details.
 
 ## Local test
 

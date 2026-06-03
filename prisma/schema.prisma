@@ -102,8 +102,12 @@ model BookingInquiry {
   status                 InquiryStatus          @default(new)
   scheduledAt            DateTime?              @map("scheduled_at")
   externalCalendarId     String?                @map("external_calendar_id")
+  spamScore              Int?                   @map("spam_score")
+  spamReasons            String[]               @default([]) @map("spam_reasons")
+  spamFlagged            Boolean                @default(false) @map("spam_flagged")
 
   @@index([createdAt])
   @@index([status])
+  @@index([spamFlagged])
   @@map("booking_inquiries")
 }
