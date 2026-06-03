@@ -42,6 +42,11 @@ sudo systemctl restart photography-by-piv
 sleep 3
 sudo systemctl is-active --quiet photography-by-piv
 
+echo "==> Smoke tests (localhost and Caddy origin)"
+curl -sf --max-time 10 http://127.0.0.1:3000/ >/dev/null
+curl -skf --max-time 15 --resolve 'photographybypiv.com:443:127.0.0.1' \
+  https://photographybypiv.com/ -o /dev/null
+
 echo "==> Smoke tests (public)"
 curl -sfI --max-time 30 https://photographybypiv.com | head -1
 curl -sfI --max-time 30 https://photographybypiv.com/book | head -1
