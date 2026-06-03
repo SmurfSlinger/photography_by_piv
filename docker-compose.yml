@@ -1,0 +1,27 @@
+# Photography by Piv — Postgres (adopt existing piv-postgres / piv_postgres_data)
+#
+# This file does not create a new database. It reuses the existing Docker volume
+# piv_postgres_data, which already contains initialized cluster data.
+#
+# - Port 127.0.0.1:5432 is localhost-only (not 0.0.0.0). The Next.js app and
+#   Prisma use DATABASE_URL pointing at localhost:5432 on the host.
+# - Credentials live in .env.postgres (gitignored). Values must match those used
+#   when the volume was first created, or authentication will fail.
+#
+# Manual cutover: see deploy/README-postgres-compose.md
+
+services:
+  piv-postgres:
+    container_name: piv-postgres
+    image: postgres:16
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - piv_postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.postgres
+
+volumes:
+  piv_postgres_data:
+    external: true
