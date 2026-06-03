@@ -242,41 +242,15 @@ export default function PortfolioCarousel({
       </div>
 
       {count > 1 && (
-        <>
-          <p
-            className="mt-4 text-center text-xs tracking-wide text-stone-500 md:hidden"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            Swipe to see more · {index + 1} / {count}
-          </p>
-          <div
-            className="mt-4 hidden flex-wrap justify-center gap-0 md:flex"
-            aria-label={`Portfolio photo ${index + 1} of ${count}`}
-            role="tablist"
-          >
-            {photos.map((_, i) => (
-              <button
-                key={i}
-                type="button"
-                role="tab"
-                aria-selected={i === index}
-                aria-label={`Show portfolio photo ${i + 1}`}
-                onClick={() => setIndex(i)}
-                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a]"
-              >
-                <span
-                  aria-hidden
-                  className={`block rounded-full transition-all ${
-                    i === index
-                      ? "h-2 w-6 bg-[#5c6b4a]"
-                      : "h-2 w-2 bg-stone-300 hover:bg-stone-400"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-        </>
+        <p
+          className="mt-4 text-center text-xs tracking-wide text-stone-500"
+          aria-live="polite"
+          aria-atomic="true"
+          aria-label={`Portfolio photo ${index + 1} of ${count}`}
+        >
+          <span className="md:hidden">Swipe to see more · </span>
+          {index + 1} / {count}
+        </p>
       )}
     </div>
   );
