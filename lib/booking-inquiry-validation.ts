@@ -1,13 +1,16 @@
 import { SessionType } from "@prisma/client";
 
-import { contactMethodValues, packageInterestValues } from "@/lib/booking-options";
+import {
+  contactMethodValues,
+  isPackageAllowedForSessionType,
+  type SessionTypeValue,
+} from "@/lib/booking-options";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const contactMethodSet = new Set<string>(contactMethodValues);
 const sessionTypeSet = new Set<string>(Object.values(SessionType));
-const packageInterestSet = new Set<string>(packageInterestValues);
 
 export type BookingInquiryInput = {
   name: string;
@@ -174,8 +177,15 @@ export function validateBookingInquiryBody(
   }
 
   const packageInterest = trimString(raw.packageInterest);
-  if (!packageInterestSet.has(packageInterest)) {
+  if (!packageInterest) {
     errors.packageInterest = "Select a package or interest.";
+  } else if (
+    !isPackageAllowedForSessionType(
+      packageInterest,
+      sessionType as SessionTypeValue
+    )
+  ) {
+    errors.packageInterest = "Select a package that matches your session type.";
   }
 
   const preferredDate = parseDateField(
@@ -196,9 +206,7 @@ export function validateBookingInquiryBody(
   }
 
   const message = trimString(raw.message);
-  if (message.length < 10) {
-    errors.message = "Message is required (at least 10 characters).";
-  } else if (message.length > 5000) {
+  if (message.length > 5000) {
     errors.message = "Message is too long.";
   }
 

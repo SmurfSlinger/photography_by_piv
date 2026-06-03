@@ -8,7 +8,8 @@ import TurnstileField, {
 } from "@/components/TurnstileField";
 import {
   contactMethodOptions,
-  packageInterestOptions,
+  isPackageAllowedForSessionType,
+  packageInterestOptionsForSessionType,
   packageInterestValues,
   sessionTypes,
   sessionTypeValues,
@@ -85,11 +86,44 @@ export default function BookingForm() {
 
     setForm((prev) => {
       const next = { ...prev };
-      if (hasPackage) next.packageInterest = packageParam!;
       if (hasSession) next.sessionType = sessionParam!;
+      const session = (
+        hasSession ? sessionParam! : prev.sessionType
+      ) as SessionTypeValue;
+      if (
+        hasPackage &&
+        isPackageAllowedForSessionType(packageParam!, session)
+      ) {
+        next.packageInterest = packageParam!;
+      } else if (
+        next.packageInterest &&
+        !isPackageAllowedForSessionType(next.packageInterest, session)
+      ) {
+        next.packageInterest = "";
+      }
       return next;
     });
   }, [searchParams]);
+
+  function updateSessionType(value: string) {
+    if (!isSessionTypeValue(value)) return;
+    setForm((prev) => {
+      const next = { ...prev, sessionType: value };
+      if (
+        prev.packageInterest &&
+        !isPackageAllowedForSessionType(prev.packageInterest, value)
+      ) {
+        next.packageInterest = "";
+      }
+      return next;
+    });
+    setFieldErrors((prev) => {
+      const next = { ...prev };
+      delete next.sessionType;
+      delete next.packageInterest;
+      return next;
+    });
+  }
 
   function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -206,6 +240,9 @@ export default function BookingForm() {
   }
 
   const showSessionOther = form.sessionType === "other";
+  const packageOptions = isSessionTypeValue(form.sessionType)
+    ? packageInterestOptionsForSessionType(form.sessionType)
+    : [];
 
   return (
     <form onSubmit={handleSubmit} className="relative space-y-8" noValidate>
@@ -361,7 +398,7 @@ export default function BookingForm() {
             name="sessionType"
             required
             value={form.sessionType}
-            onChange={(e) => updateField("sessionType", e.target.value)}
+            onChange={(e) => updateSessionType(e.target.value)}
             aria-invalid={Boolean(fieldErrors.sessionType)}
           >
             {sessionTypes.map((type) => (
@@ -402,7 +439,7 @@ export default function BookingForm() {
             <option value="" disabled>
               Select a package or option
             </option>
-            {packageInterestOptions.map((option) => (
+            {packageOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -473,7 +510,6 @@ export default function BookingForm() {
             id="message"
             name="message"
             rows={5}
-            required
             value={form.message}
             onChange={(e) => updateField("message", e.target.value)}
             aria-invalid={Boolean(fieldErrors.message)}

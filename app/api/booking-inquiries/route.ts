@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 
-import { runBookingBotGuard } from "@/lib/booking-bot-guard";
+import { getClientIp, runBookingBotGuard } from "@/lib/booking-bot-guard";
 import { validateBookingInquiryBody } from "@/lib/booking-inquiry-validation";
+import { sendBookingInquiryNotificationEmail } from "@/lib/booking-notification";
+import {
+  recordBookingInquirySubmission,
+  scoreBookingInquiryForNotification,
+} from "@/lib/booking-spam-filter";
 import { prisma } from "@/lib/prisma";
 
 const MAX_BODY_BYTES = 32_000;
@@ -64,8 +69,27 @@ export async function POST(request: Request) {
       },
     });
 
-    // TODO: send inquiry notification when mail is configured — use
-    // getBookingNotificationEmail() from lib/booking-notification.ts (BOOKING_NOTIFICATION_EMAIL).
+    const clientIp = getClientIp(request);
+    const spam = scoreBookingInquiryForNotification(data, { clientIp });
+    recordBookingInquirySubmission(clientIp);
+
+    if (spam.flagged) {
+      console.warn("booking inquiry notification flagged", {
+        inquiryId: inquiry.id,
+        spamScore: spam.score,
+        reasons: spam.reasons,
+      });
+    }
+
+    try {
+      await sendBookingInquiryNotificationEmail(inquiry, spam);
+    } catch (emailError) {
+      console.error(
+        "booking-inquiry notification email failed",
+        { inquiryId: inquiry.id },
+        emailError
+      );
+    }
 
     return NextResponse.json({ ok: true, id: inquiry.id });
   } catch (error) {

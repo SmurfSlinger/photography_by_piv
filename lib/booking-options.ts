@@ -60,6 +60,46 @@ export function sessionTypeForPackage(
   return "other";
 }
 
+const universalPackageOptions = [
+  { value: "Not sure yet", label: "Not sure yet" },
+  { value: "Other / custom package", label: "Other / custom package" },
+] as const;
+
+/** Package choices allowed for a given session type (client + server validation). */
+export function packageInterestOptionsForSessionType(
+  sessionType: SessionTypeValue
+): { value: string; label: string }[] {
+  if (sessionType === "other") {
+    return packageInterestOptions.map((option) => ({
+      value: option.value,
+      label: option.label,
+    }));
+  }
+
+  const categoryPackages = pricingCategories.flatMap((category) =>
+    category.packages
+      .filter(
+        (pkg) =>
+          sessionTypeForPackage(category.label, pkg.name) === sessionType
+      )
+      .map((pkg) => {
+        const label = packageInterestLabel(category.label, pkg.name);
+        return { value: label, label };
+      })
+  );
+
+  return [...categoryPackages, ...universalPackageOptions];
+}
+
+export function isPackageAllowedForSessionType(
+  packageInterest: string,
+  sessionType: SessionTypeValue
+): boolean {
+  return packageInterestOptionsForSessionType(sessionType).some(
+    (option) => option.value === packageInterest
+  );
+}
+
 export function packageBookHref(
   categoryLabel: string,
   packageName: string
