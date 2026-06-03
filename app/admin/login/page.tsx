@@ -13,7 +13,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
   const redirectTo =
     params.from?.startsWith("/admin") && !params.from.includes("//")
       ? params.from
-      : "/admin/inquiries";
+      : "/admin";
 
   if (await isAdminAuthenticated()) {
     redirect(redirectTo);

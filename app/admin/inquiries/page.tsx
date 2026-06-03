@@ -2,9 +2,9 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
+import InquiryList from "@/components/admin/InquiryList";
 
 export const dynamic = "force-dynamic";
-import InquiryList from "@/components/admin/InquiryList";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { inquiriesWithSpam } from "@/lib/booking-inquiry-display";
 import { prisma } from "@/lib/prisma";
@@ -41,6 +41,11 @@ export default async function AdminInquiriesPage() {
       <header className="flex flex-col gap-4 border-b border-stone-200/80 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="eyebrow">Private admin</p>
+          <p className="mt-1 text-sm">
+            <Link href="/admin" className="text-[#5c6b4a] underline-offset-2 hover:underline">
+              ← Dashboard
+            </Link>
+          </p>
           <h1 className="section-title mt-2">Booking inquiries</h1>
           <p className="mt-2 text-sm text-stone-600">
             Newest first · showing up to {MAX_INQUIRIES} inquiries

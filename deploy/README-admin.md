@@ -6,6 +6,7 @@ Private route to read saved booking inquiries (no edit/delete in v1).
 
 | Path | Purpose |
 |------|---------|
+| `/admin` | Dashboard (summary + navigation) |
 | `/admin/login` | Password/token sign-in |
 | `/admin/inquiries` | Inquiry list (newest first) |
 
