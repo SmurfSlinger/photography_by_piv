@@ -1,0 +1,59 @@
+# Admin booking inquiries viewer
+
+Private route to read saved booking inquiries (no edit/delete in v1).
+
+## URLs
+
+| Path | Purpose |
+|------|---------|
+| `/admin/login` | Password/token sign-in |
+| `/admin/inquiries` | Inquiry list (newest first) |
+
+Pages use `robots: noindex` metadata. Admin secrets are never sent to the browser as `NEXT_PUBLIC_*`.
+
+## Server environment
+
+On the R310 `.env` (not committed), set **one** of:
+
+- `ADMIN_ACCESS_TOKEN` — preferred name for a long random secret
+- `ADMIN_PASSWORD` — alternative name (same behavior)
+
+Also required (already used for gallery sessions):
+
+- `SESSION_SECRET` — signs the httpOnly `admin_session` cookie after login
+
+See `.env.example` for variable names only.
+
+Generate a token locally:
+
+```bash
+openssl rand -base64 32
+```
+
+## Spam / scam display
+
+Spam score and reasons are **not stored in Postgres**. The admin UI recomputes them from saved inquiry text using the same rules as notification email (see `lib/booking-spam-filter.ts`). Rules that depend on client IP are omitted in admin because IP is not persisted.
+
+No Prisma migration is required for v1.
+
+## Local test
+
+```bash
+# Add ADMIN_ACCESS_TOKEN and SESSION_SECRET to .env
+npm run dev
+```
+
+1. Open `/admin/inquiries` — should redirect to `/admin/login`.
+2. Wrong password — stays on login with an error.
+3. Correct token — lists inquiries newest first.
+4. View page source — no admin secret in HTML/JS.
+5. Sign out — returns to login.
+
+## Production deploy
+
+1. Add `ADMIN_ACCESS_TOKEN` (or `ADMIN_PASSWORD`) to `/home/smurfslinger/photography_by_piv/.env`.
+2. Deploy via existing CI/CD (build + restart).
+3. Open `https://photographybypiv.com/admin/inquiries` over Tailscale or trusted network.
+4. Optional: add a Cloudflare WAF rule or Access policy in front of `/admin/*` later.
+
+Do not link `/admin` from the public homepage.
