@@ -1,0 +1,22 @@
+# Deploy Photography by Piv on ubuntu-main self-hosted runner (no public SSH).
+# Setup: deploy/README-ci.md
+name: Deploy production
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    # Full labels after re-register: self-hosted, linux, x64, ubuntu-main, photography-piv
+    # Matches current migrated runner (r310) until setup-ubuntu-main-runner.sh is run with a fresh token.
+    runs-on: [self-hosted, linux, x64]
+    timeout-minutes: 20
+    steps:
+      - name: Deploy production
+        run: bash --norc --noprofile /home/smurfslinger/photography_by_piv/deploy/github-actions-deploy.sh

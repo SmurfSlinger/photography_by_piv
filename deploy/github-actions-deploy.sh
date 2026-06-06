@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Production deploy for GitHub Actions self-hosted runner on R310.
-# Requires: repo at REPO, .env on server, passwordless sudo for photography-by-piv systemctl.
+# Production deploy for GitHub Actions self-hosted runner on ubuntu-main.
+# Requires: repo at REPO, .env on server, passwordless sudo for photography-piv systemctl.
 set -euo pipefail
 
 REPO="/home/smurfslinger/photography_by_piv"
@@ -83,13 +83,13 @@ if grep -R -F -q '1x00000000000000000000' .next/; then
   exit 1
 fi
 
-echo "==> Restart photography-by-piv"
-sudo systemctl restart photography-by-piv
+echo "==> Restart photography-piv"
+sudo systemctl restart photography-piv
 sleep 3
-sudo systemctl is-active --quiet photography-by-piv
+sudo systemctl is-active --quiet photography-piv
 
 echo "==> Smoke tests (localhost and Caddy origin)"
-curl -sf --max-time 10 http://127.0.0.1:3000/ >/dev/null
+curl -sf --max-time 10 http://127.0.0.1:3003/ >/dev/null
 curl -skf --max-time 15 --resolve 'photographybypiv.com:443:127.0.0.1' \
   https://photographybypiv.com/ -o /dev/null
 

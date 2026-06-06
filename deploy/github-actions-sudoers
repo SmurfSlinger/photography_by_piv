@@ -1,0 +1,7 @@
+# Passwordless sudo for GitHub Actions deploy (photography-piv only).
+# Install: sudo cp deploy/github-actions-sudoers /etc/sudoers.d/github-actions-photography-piv
+#          sudo chmod 0440 /etc/sudoers.d/github-actions-photography-piv
+#          sudo visudo -c -f /etc/sudoers.d/github-actions-photography-piv
+smurfslinger ALL=(root) NOPASSWD: /bin/systemctl restart photography-piv, \
+                                   /bin/systemctl status photography-piv, \
+                                   /bin/systemctl is-active photography-piv

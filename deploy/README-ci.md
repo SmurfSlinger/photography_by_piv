@@ -1,65 +1,50 @@
 # GitHub Actions production deploy (self-hosted runner)
 
-Deploys run **on the R310** via a [self-hosted runner](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners). GitHub-hosted runners do not SSH into the machine (no public SSH or Tailscale exposure required for deploy).
+Deploys run **on ubuntu-main** via a [self-hosted runner](https://docs.github.com/en/actions/hosting-your-own-runners/managing-self-hosted-runners/about-self-hosted-runners). GitHub-hosted runners do not SSH into the machine (no public SSH or Tailscale exposure required for deploy).
 
 Triggers: push to `master`, or manual **Deploy production** (`workflow_dispatch`).
 
-Workflow: `.github/workflows/deploy-production.yml`  
+Workflow: `.github/workflows/deploy.yml`  
 Deploy script: `deploy/github-actions-deploy.sh`
 
 ## GitHub configuration
 
 1. Repo **Settings → Actions → Runners → New self-hosted runner** (Linux x64).
-2. Register the runner on R310 using the displayed `config.sh` commands and a one-time registration token.
-3. Install and start the runner as a **systemd service** (see below).
+2. Register the runner on ubuntu-main using `deploy/setup-ubuntu-main-runner.sh` and a one-time registration token.
+3. Install and start the runner as a **systemd service** (the setup script does this).
 4. No deploy-related repository secrets are required for this workflow.
 
-Optional: add a custom runner label (e.g. `r310`) in `config.sh` and set `runs-on: [self-hosted, r310]` in the workflow if you add more runners later.
+Runner labels: `self-hosted`, `linux`, `x64`, `ubuntu-main`, `photography-piv`
 
-## One-time setup on R310
+## One-time setup on ubuntu-main
 
-### 1. Self-hosted runner (as `smurfslinger` or a dedicated deploy user)
-
-Use the same user that owns the app repo and `.env` (recommended: `smurfslinger`).
+### 1. Self-hosted runner (as `smurfslinger`)
 
 ```bash
-# Example layout (adjust version/path from GitHub’s “New runner” instructions)
-mkdir -p ~/actions-runner && cd ~/actions-runner
-# Download and extract the runner package from GitHub, then:
-./config.sh --url https://github.com/SmurfSlinger/photography_by_piv --token <REGISTRATION_TOKEN>
-# Optional: ./config.sh ... --labels r310
-
-sudo ./svc.sh install
-sudo ./svc.sh start
-sudo ./svc.sh status
+export GITHUB_RUNNER_TOKEN='<registration token from GitHub UI>'
+bash /home/smurfslinger/photography_by_piv/deploy/setup-ubuntu-main-runner.sh
 ```
 
-The runner must reach `github.com` (outbound HTTPS). Tailscale is fine; inbound SSH from the internet is not needed.
+Runner install path: `/home/smurfslinger/actions-runner-photography_by_piv`
 
-### 2. Production repo and deploy script
+### 2. Narrow sudoers for systemd
+
+```bash
+sudo cp /home/smurfslinger/photography_by_piv/deploy/github-actions-sudoers \
+  /etc/sudoers.d/github-actions-photography-piv
+sudo chmod 0440 /etc/sudoers.d/github-actions-photography-piv
+sudo visudo -c -f /etc/sudoers.d/github-actions-photography-piv
+```
+
+Allows only `systemctl restart|status|is-active photography-piv` for `smurfslinger`.
+
+### 3. Production repo and deploy script
 
 ```bash
 chmod +x /home/smurfslinger/photography_by_piv/deploy/github-actions-deploy.sh
-
-cd /home/smurfslinger/photography_by_piv
-git fetch origin master
 ```
 
-Ensure `git pull` works for the runner user (credential helper, deploy key, or HTTPS token stored on the server — not in GitHub Actions secrets).
-
-Remove any Turnstile **test** key exports from `~/.bashrc`, `~/.profile`, etc.
-
-### 3. Narrow sudoers for systemd
-
-As root (`visudo -f /etc/sudoers.d/photography-by-piv-deploy`):
-
-```sudoers
-smurfslinger ALL=(root) NOPASSWD: /bin/systemctl restart photography-by-piv, \
-                                   /bin/systemctl is-active photography-by-piv, \
-                                   /bin/systemctl status photography-by-piv
-```
-
-Replace `smurfslinger` if the runner uses a different account.
+Ensure `git pull` works for the runner user. Remove any Turnstile **test** key exports from `~/.bashrc`, `~/.profile`, etc.
 
 ### 4. App secrets
 
@@ -69,48 +54,32 @@ Replace `smurfslinger` if the runner uses a different account.
 
 Never commit `.env` or add these to GitHub Secrets for deploy.
 
-## Deploy caching (R310 runner)
+## Production topology (ubuntu-main)
 
-`github-actions-deploy.sh` keeps local state under `.deploy-cache/` (not committed; add to `.gitignore` if desired).
+- App: `photography-piv.service` → `127.0.0.1:3003`
+- Edge: Caddy :443 → `127.0.0.1:3003`
+- Database: Docker `piv-postgres` on `127.0.0.1:5432`
 
-**Dependencies:** After `git pull`, compares a sha256 of `package.json` + `package-lock.json` to `.deploy-cache/deps.sha256`. Runs `npm ci` only when `node_modules` is missing or the hash changed. Otherwise skips `npm ci` (~40s saved on typical deploys). `npm run build` still runs `prisma generate`.
+## Deploy caching
 
-**Next build:** Preserves `.next/cache` via `/tmp/pbp-next-cache`, deletes `.next`, restores cache, then builds. Warns and cold-builds if copy fails.
+`github-actions-deploy.sh` keeps local state under `.deploy-cache/` (not committed).
 
-**Force a full dependency reinstall:**
+**Dependencies:** Compares sha256 of `package.json` + `package-lock.json` to `.deploy-cache/deps.sha256`. Runs `npm ci` only when `node_modules` is missing or the hash changed.
 
-```bash
-cd /home/smurfslinger/photography_by_piv
-rm -f .deploy-cache/deps.sha256
-rm -rf node_modules
-bash --norc --noprofile deploy/github-actions-deploy.sh
-```
-
-**Force a cold Next build (keep deps):**
-
-```bash
-rm -rf .next /tmp/pbp-next-cache
-bash --norc --noprofile deploy/github-actions-deploy.sh
-```
+**Next build:** Preserves `.next/cache` via `/tmp/pbp-next-cache`, deletes `.next`, restores cache, then builds.
 
 ## Build safety (Turnstile)
 
-`github-actions-deploy.sh`:
-
 - `unset NEXT_PUBLIC_TURNSTILE_SITE_KEY TURNSTILE_SECRET_KEY` before `source .env`
 - `NODE_ENV=production npm run build`
-- Fails if Cloudflare **test** site key prefix `1x00000000000000000000` appears under final `.next/` output
+- Fails if Cloudflare **test** site key prefix `1x00000000000000000000` appears under `.next/`
 
-The workflow runs the script with `bash --norc --noprofile` so the runner’s login environment cannot override `.env` during build.
+The workflow runs the script with `bash --norc --noprofile`.
 
-## Manual test (on R310)
+## Manual test
 
 ```bash
 bash --norc --noprofile /home/smurfslinger/photography_by_piv/deploy/github-actions-deploy.sh
 ```
 
-This restarts `photography-by-piv` and runs smoke `curl`s — use only when you intend to deploy.
-
-## Alternate approach (not used)
-
-SSH from GitHub-hosted runners (`DEPLOY_SSH_HOST`, `DEPLOY_SSH_USER`, `DEPLOY_SSH_PRIVATE_KEY`) is possible but discouraged here because R310 is usually on Tailscale and public SSH is not desired.
+This restarts `photography-piv` and runs smoke `curl`s — use only when you intend to deploy.
