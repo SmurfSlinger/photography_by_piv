@@ -15,7 +15,7 @@ jobs:
   deploy:
     # Full labels after re-register: self-hosted, linux, x64, ubuntu-main, photography-piv
     # Matches current migrated runner (r310) until setup-ubuntu-main-runner.sh is run with a fresh token.
-    runs-on: [self-hosted, linux, x64]
+    runs-on: [self-hosted, linux, x64, ubuntu-main, photography-piv]
     timeout-minutes: 20
     steps:
       - name: Deploy production
