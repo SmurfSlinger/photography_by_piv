@@ -84,9 +84,9 @@ if grep -R -F -q '1x00000000000000000000' .next/; then
 fi
 
 echo "==> Restart photography-piv"
-sudo systemctl restart photography-piv
+sudo /usr/bin/systemctl restart photography-piv
 sleep 3
-sudo systemctl is-active --quiet photography-piv
+sudo /usr/bin/systemctl is-active --quiet photography-piv
 
 echo "==> Smoke tests (localhost and Caddy origin)"
 curl -sf --max-time 10 http://127.0.0.1:3003/ >/dev/null
