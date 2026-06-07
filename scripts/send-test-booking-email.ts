@@ -50,6 +50,9 @@ function buildSampleInquiry(flagged: boolean): BookingInquiry {
       ? FLAGGED_TEST_MESSAGE
       : "This is a test booking inquiry notification.",
     status: "new",
+    adminNotes: null,
+    contactedAt: null,
+    archivedAt: null,
     scheduledAt: null,
     externalCalendarId: null,
     spamScore: spam.score,

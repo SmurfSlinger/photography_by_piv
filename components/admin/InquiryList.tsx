@@ -1,8 +1,11 @@
+import InquiryWorkflowControls from "@/components/admin/InquiryWorkflowControls";
 import type { InquiryWithSpam } from "@/lib/booking-inquiry-display";
 import {
   contactMethodsLabel,
   formatInquiryDate,
   formatInquiryDateTime,
+  inquiryStatusBadgeClass,
+  inquiryStatusLabel,
   sessionTypeLabel,
 } from "@/lib/booking-inquiry-display";
 
@@ -31,6 +34,14 @@ function InquiryDetails({ item }: { item: InquiryWithSpam }) {
 
   return (
     <div className="border-t border-stone-100 px-4 pb-5 pt-4 sm:px-5">
+      <InquiryWorkflowControls
+        inquiryId={inquiry.id}
+        status={inquiry.status}
+        adminNotes={inquiry.adminNotes}
+        contactedAt={inquiry.contactedAt}
+        archivedAt={inquiry.archivedAt}
+      />
+
       {spam.flagged && spam.reasons.length > 0 ? (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
@@ -60,7 +71,6 @@ function InquiryDetails({ item }: { item: InquiryWithSpam }) {
         <Field label="Backup date" value={formatInquiryDate(inquiry.backupDate)} />
         <Field label="Location idea" value={inquiry.locationIdea} />
         <Field label="Vibe / style" value={inquiry.vibeStyle} />
-        <Field label="Status" value={inquiry.status} />
         <Field
           label="Spam score"
           value={
@@ -114,6 +124,11 @@ function InquiryRow({ item }: { item: InquiryWithSpam }) {
           </p>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
+          <span
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryStatusBadgeClass(inquiry.status)}`}
+          >
+            {inquiryStatusLabel(inquiry.status)}
+          </span>
           {spam.flagged ? (
             <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">
               Spam {spam.score}

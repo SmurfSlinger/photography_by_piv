@@ -95,3 +95,4 @@ copy-2-dirs-to-d.sh
 
 # Local database backups
 /backups/
+.deploy-cache/

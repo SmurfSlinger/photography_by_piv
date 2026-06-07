@@ -1,5 +1,9 @@
 import type { BookingInquiry } from "@prisma/client";
 
+import {
+  INQUIRY_STATUS_LABELS,
+  type InquiryStatusValue,
+} from "@/lib/booking-inquiry-admin";
 import type { BookingInquiryInput } from "@/lib/booking-inquiry-validation";
 import { contactMethodOptions, sessionTypes } from "@/lib/booking-options";
 import {
@@ -60,6 +64,26 @@ export function sessionTypeLabel(inquiry: BookingInquiry): string {
     return `Other — ${inquiry.sessionTypeOther}`;
   }
   return sessionTypeLabels[inquiry.sessionType] ?? inquiry.sessionType;
+}
+
+export function inquiryStatusLabel(status: InquiryStatusValue | string): string {
+  return INQUIRY_STATUS_LABELS[status as InquiryStatusValue] ?? status;
+}
+
+const STATUS_BADGE_CLASSES: Record<InquiryStatusValue, string> = {
+  new: "border-sky-200 bg-sky-50 text-sky-900",
+  contacted: "border-emerald-200 bg-emerald-50 text-emerald-900",
+  scheduled: "border-violet-200 bg-violet-50 text-violet-900",
+  converted_to_booking: "border-[#5c6b4a]/30 bg-[#5c6b4a]/10 text-[#3d4a32]",
+  canceled: "border-stone-200 bg-stone-100 text-stone-600",
+  archived: "border-stone-200 bg-stone-50 text-stone-500",
+};
+
+export function inquiryStatusBadgeClass(status: InquiryStatusValue | string): string {
+  return (
+    STATUS_BADGE_CLASSES[status as InquiryStatusValue] ??
+    "border-stone-200 bg-stone-100 text-stone-600"
+  );
 }
 
 /** Uses persisted assessment when present; otherwise recomputes (legacy rows). */

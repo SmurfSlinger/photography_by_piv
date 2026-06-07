@@ -24,8 +24,10 @@ enum SessionType {
 enum InquiryStatus {
   new
   contacted
-  booked
-  closed
+  scheduled
+  converted_to_booking
+  canceled
+  archived
 }
 
 model Client {
@@ -100,6 +102,9 @@ model BookingInquiry {
   vibeStyle              String?                @map("vibe_style")
   message                String
   status                 InquiryStatus          @default(new)
+  adminNotes             String?                @map("admin_notes")
+  contactedAt            DateTime?              @map("contacted_at")
+  archivedAt             DateTime?              @map("archived_at")
   scheduledAt            DateTime?              @map("scheduled_at")
   externalCalendarId     String?                @map("external_calendar_id")
   spamScore              Int?                   @map("spam_score")
