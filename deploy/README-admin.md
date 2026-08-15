@@ -1,6 +1,6 @@
 # Admin
 
-Private routes for booking inquiries and client gallery share links.
+Private routes for booking inquiries, clients, and gallery share links.
 
 ## URLs
 
@@ -9,7 +9,8 @@ Private routes for booking inquiries and client gallery share links.
 | `/admin` | Dashboard (summary + navigation) |
 | `/admin/login` | Password/token sign-in |
 | `/admin/inquiries` | Inquiry list and workflow (newest first) |
-| `/admin/galleries` | Registered galleries, status, and share links |
+| `/admin/clients` | Client records (prerequisite for galleries) |
+| `/admin/galleries` | Galleries, photo upload, status, and share links |
 
 Pages use `robots: noindex` metadata. Admin secrets are never sent to the browser as `NEXT_PUBLIC_*`.
 
@@ -42,11 +43,18 @@ Migration: `20250603220000_booking_inquiry_spam_assessment`
 
 The inquiry list is **collapsed by default** (native `<details>` rows). Tap a row to expand full contact info, message, and spam details.
 
+## Clients
+
+`/admin/clients` is the directory of people you work with. Create a client before making a gallery.
+
+- Tap **New client** — name and optional email
+- Open a client to edit details or start a gallery for them
+
 ## Client galleries
 
 `/admin/galleries` is where galleries are created and photos are uploaded.
 
-- Tap **New gallery** — title, client, optional email, and URL slug. Always starts as Draft.
+- Tap **New gallery** — choose an existing client, then title and URL slug. Always starts as Draft.
 - Open a gallery to **drop in photos** (stored in R2), set status, and create/revoke share links.
 - Draft is unpublished only. After leaving Draft, switch between Active and Archived (cannot return to Draft).
 - Share URLs are shown **once**; store them before leaving the page.
@@ -65,7 +73,7 @@ npm run dev
 1. Open `/admin/inquiries` — should redirect to `/admin/login`.
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
-4. Open `/admin/galleries` — create a draft, open it, and upload photos (requires R2).
+4. Open `/admin/clients` — create a client, then open `/admin/galleries` to make a draft and upload photos (requires R2).
 5. View page source — no admin secret in HTML/JS.
 6. Sign out — returns to login.
 

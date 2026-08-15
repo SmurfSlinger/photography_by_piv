@@ -51,8 +51,7 @@ async function uniqueGallerySlug(preferred: string): Promise<string> {
 
 export async function createGallery(input: {
   title: string;
-  clientName: string;
-  clientEmail?: string | null;
+  clientId: string;
   slug?: string;
 }): Promise<CreateGalleryResult> {
   if (!(await isAdminAuthenticated())) {
@@ -64,47 +63,32 @@ export async function createGallery(input: {
     return parsed;
   }
 
-  const { title, clientName, clientEmail, slug: requestedSlug } = parsed.data;
+  const { title, clientId, slug: requestedSlug } = parsed.data;
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { id: true },
+  });
+  if (!client) {
+    return { ok: false, error: "Choose an existing client." };
+  }
 
   try {
     const slug = await uniqueGallerySlug(requestedSlug);
 
-    const gallery = await prisma.$transaction(async (tx) => {
-      let clientId: string | null = null;
-      if (clientEmail) {
-        const existing = await tx.client.findFirst({
-          where: { email: clientEmail },
-          select: { id: true },
-        });
-        if (existing) {
-          await tx.client.update({
-            where: { id: existing.id },
-            data: { name: clientName },
-          });
-          clientId = existing.id;
-        }
-      }
-
-      if (!clientId) {
-        const client = await tx.client.create({
-          data: { name: clientName, email: clientEmail },
-        });
-        clientId = client.id;
-      }
-
-      return tx.gallery.create({
-        data: {
-          title,
-          slug,
-          status: "draft",
-          clientId,
-        },
-        select: { id: true },
-      });
+    const gallery = await prisma.gallery.create({
+      data: {
+        title,
+        slug,
+        status: "draft",
+        clientId: client.id,
+      },
+      select: { id: true },
     });
 
     revalidatePath("/admin");
     revalidatePath("/admin/galleries");
+    revalidatePath(`/admin/clients/${client.id}`);
     return { ok: true, galleryId: gallery.id };
   } catch (error) {
     console.error("createGallery failed", error);

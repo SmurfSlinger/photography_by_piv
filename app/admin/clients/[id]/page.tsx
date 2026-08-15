@@ -1,0 +1,98 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+
+import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
+import ClientForm from "@/components/admin/ClientForm";
+import GalleryList, {
+  type AdminGalleryRow,
+} from "@/components/admin/GalleryList";
+import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function AdminClientDetailPage({ params }: PageProps) {
+  if (!(await isAdminAuthenticated())) {
+    const { id } = await params;
+    redirect(`/admin/login?from=/admin/clients/${id}`);
+  }
+
+  const { id } = await params;
+
+  const client = await prisma.client.findUnique({
+    where: { id },
+    include: {
+      galleries: {
+        orderBy: { createdAt: "desc" },
+        include: {
+          _count: { select: { photos: true } },
+        },
+      },
+    },
+  });
+
+  if (!client) {
+    notFound();
+  }
+
+  const galleries: AdminGalleryRow[] = client.galleries.map((gallery) => ({
+    id: gallery.id,
+    slug: gallery.slug,
+    title: gallery.title,
+    status: gallery.status,
+    allowOriginalDownload: gallery.allowOriginalDownload,
+    createdAt: gallery.createdAt,
+    photoCount: gallery._count.photos,
+    clientName: client.name,
+    clientEmail: client.email,
+  }));
+
+  return (
+    <main className="mx-auto max-w-3xl px-6 pb-20 pt-10 sm:px-8">
+      <header className="flex flex-col gap-4 border-b border-stone-200/80 pb-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="eyebrow">Private admin</p>
+          <p className="mt-1 text-sm">
+            <Link
+              href="/admin/clients"
+              className="text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              ← Clients
+            </Link>
+          </p>
+          <h1 className="section-title mt-2">{client.name}</h1>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href={`/admin/galleries/new?clientId=${client.id}`}
+            className="btn-primary !px-5 !py-2 text-sm"
+          >
+            New gallery
+          </Link>
+          <AdminLogoutButton />
+        </div>
+      </header>
+
+      <section className="mt-8">
+        <ClientForm
+          key={client.id}
+          clientId={client.id}
+          initialName={client.name}
+          initialEmail={client.email}
+        />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-4 font-serif text-lg text-stone-900">Galleries</h2>
+        <GalleryList
+          galleries={galleries}
+          newHref={`/admin/galleries/new?clientId=${client.id}`}
+        />
+      </section>
+    </main>
+  );
+}

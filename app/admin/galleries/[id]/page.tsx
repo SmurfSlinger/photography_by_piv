@@ -28,7 +28,7 @@ export default async function AdminGalleryDetailPage({ params }: PageProps) {
   const gallery = await prisma.gallery.findUnique({
     where: { id },
     include: {
-      client: { select: { name: true, email: true } },
+      client: { select: { id: true, name: true, email: true } },
       photos: { orderBy: { sortOrder: "asc" } },
       accessTokens: {
         where: { revokedAt: null },
@@ -79,7 +79,14 @@ export default async function AdminGalleryDetailPage({ params }: PageProps) {
             </Link>
           </p>
           <h1 className="section-title mt-2">{gallery.title}</h1>
-          <p className="mt-2 text-sm text-stone-600">{gallery.client.name}</p>
+          <p className="mt-2 text-sm text-stone-600">
+            <Link
+              href={`/admin/clients/${gallery.client.id}`}
+              className="text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              {gallery.client.name}
+            </Link>
+          </p>
           {gallery.client.email ? (
             <a
               href={`mailto:${gallery.client.email}`}

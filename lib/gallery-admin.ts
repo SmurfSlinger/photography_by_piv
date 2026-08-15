@@ -1,5 +1,7 @@
 import type { GalleryStatus } from "@prisma/client";
 
+import { isClientId } from "@/lib/client-admin";
+
 export const GALLERY_STATUSES = [
   "draft",
   "active",
@@ -88,32 +90,24 @@ export function isValidGallerySlug(slug: string): boolean {
 
 export type CreateGalleryInput = {
   title: string;
-  clientName: string;
-  clientEmail: string | null;
+  clientId: string;
   slug: string;
 };
 
 export function parseCreateGalleryInput(input: {
   title?: string;
-  clientName?: string;
-  clientEmail?: string | null;
+  clientId?: string;
   slug?: string;
 }): { ok: true; data: CreateGalleryInput } | { ok: false; error: string } {
   const title = input.title?.trim() ?? "";
-  const clientName = input.clientName?.trim() ?? "";
-  const clientEmailRaw = input.clientEmail?.trim() ?? "";
+  const clientId = input.clientId?.trim() ?? "";
   const slugRaw = input.slug?.trim() || slugifyGalleryTitle(title);
 
   if (title.length < 1 || title.length > 120) {
     return { ok: false, error: "Title is required (120 characters or fewer)." };
   }
-  if (clientName.length < 1 || clientName.length > 120) {
-    return { ok: false, error: "Client name is required (120 characters or fewer)." };
-  }
-  if (clientEmailRaw.length > 0) {
-    if (clientEmailRaw.length > 120 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(clientEmailRaw)) {
-      return { ok: false, error: "Enter a valid client email, or leave it blank." };
-    }
+  if (!isClientId(clientId)) {
+    return { ok: false, error: "Choose an existing client." };
   }
   if (!isValidGallerySlug(slugRaw)) {
     return {
@@ -126,8 +120,7 @@ export function parseCreateGalleryInput(input: {
     ok: true,
     data: {
       title,
-      clientName,
-      clientEmail: clientEmailRaw.length > 0 ? clientEmailRaw : null,
+      clientId,
       slug: slugRaw,
     },
   };

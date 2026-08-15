@@ -20,15 +20,17 @@ export type AdminGalleryRow = {
 
 export default function GalleryList({
   galleries,
+  newHref = "/admin/galleries/new",
 }: {
   galleries: AdminGalleryRow[];
+  newHref?: string;
 }) {
   if (galleries.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center text-stone-500">
         No galleries yet.{" "}
         <Link
-          href="/admin/galleries/new"
+          href={newHref}
           className="text-[#5c6b4a] underline-offset-2 hover:underline"
         >
           New gallery

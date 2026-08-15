@@ -203,6 +203,11 @@ export default async function AdminDashboardPage() {
           href="/admin/inquiries"
         />
         <AdminNavCard
+          title="Clients"
+          description="Create client records to attach galleries and other work."
+          href="/admin/clients"
+        />
+        <AdminNavCard
           title="Client galleries"
           description="Create galleries, upload photos, and share client links."
           href="/admin/galleries"
