@@ -3,15 +3,9 @@ import { redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import AdminNavCard from "@/components/admin/AdminNavCard";
-import BookingDayCalendar from "@/components/admin/BookingDayCalendar";
+import DashboardBookingCalendar from "@/components/admin/DashboardBookingCalendar";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { loadOccupiedBookings } from "@/lib/inquiry-bookings";
-import {
-  bookingHref,
-  bookingKey,
-  todayIsoInDenver,
-} from "@/lib/inquiry-phase";
-import { formatBookedSlot } from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -47,9 +41,6 @@ export default async function AdminDashboardPage() {
       return [] as Awaited<ReturnType<typeof loadOccupiedBookings>>;
     }),
   ]);
-
-  const today = todayIsoInDenver();
-  const upcoming = occupied.filter((booking) => booking.date >= today);
 
   return (
     <main className="mx-auto max-w-3xl px-6 pb-20 pt-10 sm:px-8">
@@ -94,35 +85,8 @@ export default async function AdminDashboardPage() {
       <section className="mt-8 rounded-xl border border-stone-200/80 bg-white px-5 py-5 shadow-sm">
         <h2 className="font-serif text-lg text-stone-900">Booked</h2>
         <div className="mt-4">
-          <BookingDayCalendar
-            selectedDate={null}
-            occupied={occupied}
-            linkBookings
-          />
+          <DashboardBookingCalendar occupied={occupied} />
         </div>
-        {upcoming.length > 0 ? (
-          <ul className="mt-5 divide-y divide-stone-100 border-t border-stone-100">
-            {upcoming.slice(0, 8).map((booking) => (
-              <li key={bookingKey(booking)}>
-                <Link
-                  href={bookingHref(booking)}
-                  className="flex items-baseline justify-between gap-3 py-2.5 text-sm hover:text-[#3d4a32]"
-                >
-                  <span className="font-medium text-stone-800">
-                    {booking.name}
-                  </span>
-                  <span className="shrink-0 text-stone-500">
-                    {formatBookedSlot(booking.startAt, booking.endAt)}
-                  </span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="mt-4 text-sm text-stone-500">
-            None yet.
-          </p>
-        )}
       </section>
 
       <section className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">

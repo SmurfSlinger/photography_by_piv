@@ -65,7 +65,9 @@ export default function BookDaySection({
       denverTimeFromDateTime(own.endAt) === endTime
   );
   const daySlots = selectedDate
-    ? occupied.filter((booking) => booking.date === selectedDate)
+    ? occupied
+        .filter((booking) => booking.date === selectedDate)
+        .sort((a, b) => a.startAt.localeCompare(b.startAt))
     : [];
 
   const inputClass =
