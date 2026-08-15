@@ -1,4 +1,3 @@
-import type { InquiryStatus } from "@prisma/client";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -6,45 +5,47 @@ import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
 import InquiryList from "@/components/admin/InquiryList";
 import InquiryStatusFilter from "@/components/admin/InquiryStatusFilter";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { inquiriesWithSpam } from "@/lib/booking-inquiry-display";
 import {
-  INQUIRY_STATUSES,
-  isInquiryStatus,
-  type InquiryStatusValue,
-} from "@/lib/booking-inquiry-admin";
+  loadOccupiedBookings,
+  prismaWhereForPhase,
+} from "@/lib/inquiry-bookings";
+import {
+  INQUIRY_PHASES,
+  INQUIRY_PHASE_LABELS,
+  parseInquiryPhaseFilter,
+  type InquiryPhase,
+} from "@/lib/inquiry-phase";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
-import { inquiriesWithSpam } from "@/lib/booking-inquiry-display";
-import { prisma } from "@/lib/prisma";
 
 const MAX_INQUIRIES = 200;
 
 type PageProps = {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; open?: string }>;
 };
 
-function parseStatusFilter(value: string | undefined): InquiryStatusValue | null {
-  if (!value) return null;
-  return isInquiryStatus(value) ? value : null;
-}
-
-async function loadStatusCounts(): Promise<Record<InquiryStatusValue | "all", number>> {
+async function loadPhaseCounts(): Promise<Record<InquiryPhase | "all", number>> {
   const grouped = await prisma.bookingInquiry.groupBy({
     by: ["status"],
     _count: { _all: true },
   });
 
-  const counts = Object.fromEntries(
-    INQUIRY_STATUSES.map((status) => [status, 0])
-  ) as Record<InquiryStatusValue, number>;
+  const byStatus = Object.fromEntries(
+    grouped.map((row) => [row.status, row._count._all])
+  ) as Record<string, number>;
 
-  let total = 0;
-  for (const row of grouped) {
-    const status = row.status as InquiryStatusValue;
-    counts[status] = row._count._all;
-    total += row._count._all;
-  }
-
-  return { all: total, ...counts };
+  const counts: Record<InquiryPhase | "all", number> = {
+    all: 0,
+    new: byStatus.new ?? 0,
+    contacted: byStatus.contacted ?? 0,
+    booked:
+      (byStatus.scheduled ?? 0) + (byStatus.converted_to_booking ?? 0),
+    canceled: (byStatus.canceled ?? 0) + (byStatus.archived ?? 0),
+  };
+  counts.all = INQUIRY_PHASES.reduce((sum, phase) => sum + counts[phase], 0);
+  return counts;
 }
 
 export default async function AdminInquiriesPage({ searchParams }: PageProps) {
@@ -52,18 +53,17 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
     redirect("/admin/login?from=/admin/inquiries");
   }
 
-  const { status: statusParam } = await searchParams;
-  const statusFilter = parseStatusFilter(statusParam);
+  const { status: statusParam, open: openId } = await searchParams;
+  const phaseFilter = parseInquiryPhaseFilter(statusParam);
 
   let inquiries;
-  let statusCounts: Record<InquiryStatusValue | "all", number> | null = null;
+  let phaseCounts: Record<InquiryPhase | "all", number> | null = null;
+  let occupied = [] as Awaited<ReturnType<typeof loadOccupiedBookings>>;
   try {
     const where =
-      statusFilter !== null
-        ? { status: statusFilter as InquiryStatus }
-        : undefined;
+      phaseFilter !== null ? prismaWhereForPhase(phaseFilter) : undefined;
 
-    [inquiries, statusCounts] = await Promise.all([
+    [inquiries, phaseCounts, occupied] = await Promise.all([
       prisma.bookingInquiry.findMany({
         where,
         orderBy: { createdAt: "desc" },
@@ -72,7 +72,8 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
           client: { select: { id: true, name: true } },
         },
       }),
-      loadStatusCounts(),
+      loadPhaseCounts(),
+      loadOccupiedBookings(),
     ]);
   } catch (error) {
     console.error("admin inquiries load failed", error);
@@ -100,24 +101,26 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
           </p>
           <h1 className="section-title mt-2">Booking inquiries</h1>
           <p className="mt-2 text-sm text-stone-600">
-            Newest first · showing up to {MAX_INQUIRIES} inquiries
-            {statusFilter ? ` · filtered to ${statusFilter.replaceAll("_", " ")}` : ""}
+            Newest first · showing up to {MAX_INQUIRIES}
+            {phaseFilter
+              ? ` · ${INQUIRY_PHASE_LABELS[phaseFilter].toLowerCase()}`
+              : ""}
           </p>
         </div>
         <AdminLogoutButton />
       </header>
 
-      {statusCounts ? (
+      {phaseCounts ? (
         <div className="mt-6">
           <InquiryStatusFilter
-            activeStatus={statusFilter}
-            counts={statusCounts}
+            activePhase={phaseFilter}
+            counts={phaseCounts}
           />
         </div>
       ) : null}
 
       <div className="mt-6">
-        <InquiryList items={items} />
+        <InquiryList items={items} occupied={occupied} openId={openId} />
       </div>
 
       <p className="mt-10 text-center text-sm text-stone-500">

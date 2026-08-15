@@ -8,11 +8,16 @@ import GalleryList, {
 } from "@/components/admin/GalleryList";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
-  inquiryStatusBadgeClass,
-  inquiryStatusLabel,
-  sessionTypeLabel,
   formatInquiryDateTime,
+  sessionTypeLabel,
 } from "@/lib/booking-inquiry-display";
+import {
+  formatBookedDate,
+  inquiryPhase,
+  inquiryPhaseBadgeClass,
+  inquiryPhaseLabel,
+  isoDateFromValue,
+} from "@/lib/inquiry-phase";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -44,6 +49,8 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           id: true,
           status: true,
           createdAt: true,
+          scheduledAt: true,
+          contactedAt: true,
           sessionType: true,
           sessionTypeOther: true,
         },
@@ -110,26 +117,38 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           </p>
         ) : (
           <ul className="space-y-2">
-            {client.inquiries.map((inquiry) => (
-              <li
-                key={inquiry.id}
-                className="flex items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm text-stone-800">
-                    {sessionTypeLabel(inquiry)}
-                  </p>
-                  <p className="mt-0.5 text-xs text-stone-500">
-                    {formatInquiryDateTime(inquiry.createdAt)}
-                  </p>
-                </div>
-                <span
-                  className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryStatusBadgeClass(inquiry.status)}`}
-                >
-                  {inquiryStatusLabel(inquiry.status)}
-                </span>
-              </li>
-            ))}
+            {client.inquiries.map((inquiry) => {
+              const phase = inquiryPhase(inquiry);
+              const bookedDate = isoDateFromValue(inquiry.scheduledAt);
+              return (
+                <li key={inquiry.id}>
+                  <Link
+                    href={`/admin/inquiries?open=${inquiry.id}`}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white px-4 py-3 transition hover:border-[#5c6b4a]/40"
+                  >
+                    <div className="min-w-0">
+                      <p className="text-sm text-stone-800">
+                        {sessionTypeLabel(inquiry)}
+                        {phase === "booked" && bookedDate ? (
+                          <span className="text-stone-500">
+                            {" "}
+                            · {formatBookedDate(bookedDate)}
+                          </span>
+                        ) : null}
+                      </p>
+                      <p className="mt-0.5 text-xs text-stone-500">
+                        {formatInquiryDateTime(inquiry.createdAt)}
+                      </p>
+                    </div>
+                    <span
+                      className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryPhaseBadgeClass(phase)}`}
+                    >
+                      {inquiryPhaseLabel(phase)}
+                    </span>
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

@@ -2,25 +2,39 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
-import {
-  INQUIRY_STATUSES,
-  INQUIRY_STATUS_LABELS,
-  type InquiryStatusValue,
-} from "@/lib/booking-inquiry-admin";
+import BookingDayCalendar from "@/components/admin/BookingDayCalendar";
 import { formatInquiryDateTime } from "@/lib/booking-inquiry-display";
-import { createClientFromInquiry } from "@/lib/client-admin-actions";
-import { updateInquiryWorkflow } from "@/lib/inquiry-workflow-actions";
+import {
+  bookInquiryOnDate,
+  cancelInquiryBooking,
+  reopenInquiry,
+  saveInquiryNotes,
+  setInquiryContacted,
+} from "@/lib/inquiry-workflow-actions";
+import {
+  formatBookedDate,
+  inquiryPhase,
+  inquiryPhaseBadgeClass,
+  inquiryPhaseLabel,
+  isoDateFromValue,
+  type InquiryPhase,
+  type OccupiedBooking,
+} from "@/lib/inquiry-phase";
 
 type Props = {
   inquiryId: string;
-  status: InquiryStatusValue | string;
+  status: string;
   adminNotes: string | null;
   contactedAt: Date | string | null;
+  scheduledAt: Date | string | null;
   archivedAt: Date | string | null;
+  preferredDate: Date | string | null;
+  backupDate: Date | string | null;
   clientId: string | null;
   clientName: string | null;
+  occupied: OccupiedBooking[];
 };
 
 function toDate(value: Date | string | null): Date | null {
@@ -30,116 +44,200 @@ function toDate(value: Date | string | null): Date | null {
 
 export default function InquiryWorkflowControls({
   inquiryId,
-  status: initialStatus,
+  status,
   adminNotes: initialNotes,
   contactedAt,
+  scheduledAt,
   archivedAt,
+  preferredDate,
+  backupDate,
   clientId,
   clientName,
+  occupied,
 }: Props) {
   const router = useRouter();
-  const [status, setStatus] = useState(String(initialStatus));
   const [adminNotes, setAdminNotes] = useState(initialNotes ?? "");
+  const [selectedDate, setSelectedDate] = useState(
+    isoDateFromValue(scheduledAt) ?? isoDateFromValue(preferredDate)
+  );
+  const [contactedOverride, setContactedOverride] = useState<boolean | null>(
+    null
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [savedAt, setSavedAt] = useState<Date | null>(null);
 
+  const phase: InquiryPhase = inquiryPhase({
+    status,
+    scheduledAt,
+    contactedAt,
+  });
+  const bookedDate = isoDateFromValue(scheduledAt);
   const contacted = toDate(contactedAt);
   const archived = toDate(archivedAt);
+  const contactedChecked =
+    contactedOverride ?? (phase !== "new" && phase !== "canceled");
+  const notesChanged =
+    (adminNotes.trim() || null) !== (initialNotes?.trim() || null);
 
-  async function handleSave() {
+  const hintDates = useMemo(() => {
+    const hints: { date: string; label: string }[] = [];
+    const preferred = isoDateFromValue(preferredDate);
+    const backup = isoDateFromValue(backupDate);
+    if (preferred) hints.push({ date: preferred, label: "Preferred date" });
+    if (backup) hints.push({ date: backup, label: "Backup date" });
+    return hints;
+  }, [preferredDate, backupDate]);
+
+  async function run(
+    action: () => Promise<{ ok: true } | { ok: false; error: string }>
+  ): Promise<boolean> {
     setPending(true);
     setError(null);
-
-    const payload: { status?: InquiryStatusValue; adminNotes: string | null } = {
-      adminNotes: adminNotes.trim().length > 0 ? adminNotes.trim() : null,
-    };
-
-    if (status !== initialStatus) {
-      payload.status = status as InquiryStatusValue;
-    }
-
     try {
-      const result = await updateInquiryWorkflow(inquiryId, payload);
-
+      const result = await action();
       if (!result.ok) {
         setError(result.error);
-        return;
+        return false;
       }
-
       setSavedAt(new Date());
       router.refresh();
+      return true;
     } catch {
       setError("Unable to save — try again");
+      return false;
     } finally {
       setPending(false);
     }
   }
 
-  async function handleCreateClient() {
-    if (pending) return;
-    setPending(true);
-    setError(null);
-    try {
-      const result = await createClientFromInquiry(inquiryId);
-      if (!result.ok) {
-        setError(result.error);
-        return;
-      }
-      router.push(`/admin/clients/${result.clientId}`);
-      router.refresh();
-    } catch {
-      setError("Unable to create client — try again");
-    } finally {
-      setPending(false);
-    }
-  }
-
-  const hasChanges =
-    status !== String(initialStatus) ||
-    (adminNotes.trim() || null) !== (initialNotes?.trim() || null);
+  const bookedForSelected = Boolean(
+    selectedDate && phase === "booked" && selectedDate === bookedDate
+  );
 
   return (
     <div className="mb-5 rounded-lg border border-[#5c6b4a]/20 bg-[#5c6b4a]/5 px-4 py-4">
-      <p className="text-xs font-semibold uppercase tracking-wide text-[#3d4a32]">
-        Workflow
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-xs font-semibold uppercase tracking-wide text-[#3d4a32]">
+          Workflow
+        </p>
+        <span
+          className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryPhaseBadgeClass(phase)}`}
+        >
+          {phase === "booked" && bookedDate
+            ? `Booked ${formatBookedDate(bookedDate)}`
+            : inquiryPhaseLabel(phase)}
+        </span>
+      </div>
 
-      <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div>
-          <label
-            htmlFor={`status-${inquiryId}`}
-            className="text-xs font-medium uppercase tracking-wide text-stone-500"
-          >
-            Status
-          </label>
-          <select
-            id={`status-${inquiryId}`}
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            disabled={pending}
-            className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
-          >
-            {INQUIRY_STATUSES.map((value) => (
-              <option key={value} value={value}>
-                {INQUIRY_STATUS_LABELS[value]}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="flex flex-col justify-end text-xs text-stone-500">
+      {phase !== "canceled" ? (
+        <label className="mt-4 flex items-center gap-2 text-sm text-stone-800">
+          <input
+            type="checkbox"
+            checked={contactedChecked}
+            disabled={pending || phase === "booked"}
+            onChange={(e) => {
+              const next = e.target.checked;
+              setContactedOverride(next);
+              void run(() => setInquiryContacted(inquiryId, next)).then(
+                (ok) => {
+                  if (!ok) setContactedOverride(null);
+                }
+              );
+            }}
+            className="size-4 rounded border-stone-300 text-[#5c6b4a] focus:ring-[#5c6b4a]"
+          />
+          Contacted
           {contacted ? (
-            <p>Contacted {formatInquiryDateTime(contacted)}</p>
+            <span className="text-xs text-stone-500">
+              {formatInquiryDateTime(contacted)}
+            </span>
           ) : null}
-          {archived ? (
-            <p className={contacted ? "mt-1" : ""}>
-              Archived {formatInquiryDateTime(archived)}
+        </label>
+      ) : null}
+
+      {phase === "canceled" ? (
+        <div className="mt-4">
+          <p className="text-sm text-stone-600">
+            Canceled
+            {archived ? ` ${formatInquiryDateTime(archived)}` : ""}. The day is
+            free again.
+          </p>
+          <button
+            type="button"
+            onClick={() => void run(() => reopenInquiry(inquiryId))}
+            disabled={pending}
+            className="mt-3 rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Reopen
+          </button>
+        </div>
+      ) : (
+        <div className="mt-4">
+          <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+            {phase === "booked" ? "Booked day" : "Book a day"}
+          </p>
+          {phase === "booked" && bookedDate ? (
+            <p className="mt-1 text-sm text-stone-800">
+              {clientName ?? "Client"} is booked for{" "}
+              {formatBookedDate(bookedDate, "long")}.
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-stone-600">
+              Pick a free day. That creates the client and holds the date.
+            </p>
+          )}
+
+          <div className="mt-3 rounded-lg border border-stone-200 bg-white px-3 py-3">
+            <BookingDayCalendar
+              selectedDate={selectedDate}
+              occupied={occupied}
+              currentInquiryId={inquiryId}
+              hintDates={hintDates}
+              onSelect={setSelectedDate}
+            />
+          </div>
+
+          {hintDates.length > 0 ? (
+            <p className="mt-2 text-xs text-stone-500">
+              {hintDates
+                .map(
+                  (hint) =>
+                    `${hint.label} ${formatBookedDate(hint.date)}`
+                )
+                .join(" · ")}
             </p>
           ) : null}
-          {!contacted && !archived ? <p>No workflow timestamps yet</p> : null}
+
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                if (!selectedDate) return;
+                void run(() => bookInquiryOnDate(inquiryId, selectedDate));
+              }}
+              disabled={pending || !selectedDate || bookedForSelected}
+              className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {phase === "booked"
+                ? "Update date"
+                : selectedDate
+                  ? `Book ${formatBookedDate(selectedDate)}`
+                  : "Book this day"}
+            </button>
+            {phase === "booked" ? (
+              <button
+                type="button"
+                onClick={() => void run(() => cancelInquiryBooking(inquiryId))}
+                disabled={pending}
+                className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                Cancel booking
+              </button>
+            ) : null}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="mt-4">
         <label
@@ -154,7 +252,7 @@ export default function InquiryWorkflowControls({
           onChange={(e) => setAdminNotes(e.target.value)}
           disabled={pending}
           rows={3}
-          placeholder="Follow-up notes, call outcomes, scheduling details…"
+          placeholder="Follow-up notes, call outcomes…"
           className="mt-1 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
         />
       </div>
@@ -162,11 +260,11 @@ export default function InquiryWorkflowControls({
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button
           type="button"
-          onClick={handleSave}
-          disabled={pending || !hasChanges}
-          className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+          onClick={() => void run(() => saveInquiryNotes(inquiryId, adminNotes))}
+          disabled={pending || !notesChanged}
+          className="rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {pending ? "Saving…" : "Save workflow"}
+          {pending ? "Saving…" : "Save notes"}
         </button>
         {clientId ? (
           <>
@@ -183,16 +281,7 @@ export default function InquiryWorkflowControls({
               New gallery
             </Link>
           </>
-        ) : (
-          <button
-            type="button"
-            onClick={() => void handleCreateClient()}
-            disabled={pending}
-            className="rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            Create client
-          </button>
-        )}
+        ) : null}
         {savedAt ? (
           <span className="text-xs text-stone-500">
             Saved {formatInquiryDateTime(savedAt)}

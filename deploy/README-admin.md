@@ -33,23 +33,27 @@ Generate a token locally:
 openssl rand -base64 32
 ```
 
-## Spam / scam display
+## Inquiry workflow
 
-New inquiries store `spamScore`, `spamReasons`, and `spamFlagged` at submission time (same assessment as notification email). The dashboard counts flagged rows from `spamFlagged`.
+Usual path after a request:
+
+1. **New** — reply, then check **Contacted**.
+2. **Book a day** on the calendar. That holds the date (one inquiry per day), creates/links the client, and the dashboard calendar shows it as booked.
+3. Open the client and create a gallery when you are ready to share photos.
+
+**Canceled** frees the day. Reopen if it was a mistake, then book again.
+
+The inquiry list is **collapsed by default**. Expand a row for contact details, the calendar, and notes. Flagged spam reasons still appear when the filter marked the request.
 
 Inquiries saved **before** the spam migration have `spam_score` null; the admin list **recomputes** display-only assessment for those rows (IP rules still omitted).
 
 Migration: `20250603220000_booking_inquiry_spam_assessment`
 
-The inquiry list is **collapsed by default** (native `<details>` rows). Tap a row to expand full contact info, message, and spam details.
-
-Usual path after a request: **New → Contacted → Scheduled → Converted to booking**. Converting (or tapping **Create client**) makes the client record. Then create a gallery and share link.
-
 ## Clients
 
 `/admin/clients` is the directory of people you work with. Galleries attach to a client.
 
-- **Usual path:** convert a booking inquiry (creates and links the client)
+- **Usual path:** book an inquiry for a day (creates and links the client)
 - **Manual path:** **Add without inquiry** for someone who did not send a request
 - Open a client to edit details or start a gallery for them
 
@@ -77,7 +81,7 @@ npm run dev
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
 4. Optional: `npm run seed-example-inquiry` to add a sample wedding request.
-5. Open an inquiry, contact/schedule as needed, then **Create client** (or set status to Converted to booking). From the client, make a gallery and upload photos (requires R2).
+5. Open an inquiry, check Contacted, then book a day on the calendar. From the client, make a gallery and upload photos (requires R2).
 6. View page source — no admin secret in HTML/JS.
 7. Sign out — returns to login.
 
