@@ -13,7 +13,6 @@ import {
   revokeGalleryShareLink,
   updateGalleryStatus,
 } from "@/lib/gallery-admin-actions";
-import { formatInquiryDateTime } from "@/lib/booking-inquiry-display";
 
 export type GalleryTokenRow = {
   id: string;
@@ -29,15 +28,6 @@ type Props = {
   tokens: GalleryTokenRow[];
 };
 
-function toDate(value: Date | string | null): Date | null {
-  if (!value) return null;
-  return value instanceof Date ? value : new Date(value);
-}
-
-function requiredDate(value: Date | string): Date {
-  return value instanceof Date ? value : new Date(value);
-}
-
 export default function GalleryShareControls({
   galleryId,
   status: initialStatus,
@@ -51,21 +41,25 @@ export default function GalleryShareControls({
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  async function handleStatusSave() {
+  const archived = status === "archived";
+
+  async function handleStatus(next: GalleryStatusValue) {
+    if (next === status || pending) return;
+    const previous = status;
+    setStatus(next);
     setPending(true);
     setError(null);
     try {
-      const result = await updateGalleryStatus(
-        galleryId,
-        status as GalleryStatusValue
-      );
+      const result = await updateGalleryStatus(galleryId, next);
       if (!result.ok) {
+        setStatus(previous);
         setError(result.error);
         return;
       }
       router.refresh();
     } catch {
-      setError("Unable to save status — try again");
+      setStatus(previous);
+      setError("Couldn’t update status");
     } finally {
       setPending(false);
     }
@@ -73,6 +67,7 @@ export default function GalleryShareControls({
 
   async function handleCreateLink(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (archived) return;
     setPending(true);
     setError(null);
     setShareUrl(null);
@@ -85,9 +80,15 @@ export default function GalleryShareControls({
       }
       setShareUrl(result.shareUrl);
       setLabel("");
+      try {
+        await navigator.clipboard.writeText(result.shareUrl);
+        setCopied(true);
+      } catch {
+        setCopied(false);
+      }
       router.refresh();
     } catch {
-      setError("Unable to create share link — try again");
+      setError("Couldn’t create link");
     } finally {
       setPending(false);
     }
@@ -104,7 +105,7 @@ export default function GalleryShareControls({
       }
       router.refresh();
     } catch {
-      setError("Unable to revoke link — try again");
+      setError("Couldn’t revoke link");
     } finally {
       setPending(false);
     }
@@ -116,153 +117,102 @@ export default function GalleryShareControls({
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
     } catch {
-      setError("Copy failed — select the URL and copy it manually");
+      setError("Copy failed");
     }
   }
 
-  const statusChanged = status !== String(initialStatus);
-
   return (
-    <div className="space-y-5">
-      <div className="rounded-lg border border-[#5c6b4a]/20 bg-[#5c6b4a]/5 px-4 py-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#3d4a32]">
-          Gallery status
-        </p>
-        <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="min-w-0 flex-1">
-            <label
-              htmlFor={`gallery-status-${galleryId}`}
-              className="text-xs font-medium uppercase tracking-wide text-stone-500"
-            >
-              Status
-            </label>
-            <select
-              id={`gallery-status-${galleryId}`}
-              value={status}
-              onChange={(e) => setStatus(e.target.value)}
+    <div className="space-y-4">
+      <div
+        className="grid grid-cols-3 overflow-hidden rounded-lg border border-stone-200"
+        role="group"
+        aria-label="Status"
+      >
+        {GALLERY_STATUSES.map((value) => {
+          const selected = status === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => handleStatus(value)}
               disabled={pending}
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
+              className={
+                "px-2 py-2 text-sm font-medium transition disabled:opacity-60 " +
+                (selected
+                  ? "bg-[#5c6b4a] text-white"
+                  : "bg-white text-stone-600 hover:bg-stone-50")
+              }
             >
-              {GALLERY_STATUSES.map((value) => (
-                <option key={value} value={value}>
-                  {GALLERY_STATUS_LABELS[value]}
-                </option>
-              ))}
-            </select>
-          </div>
-          <button
-            type="button"
-            onClick={handleStatusSave}
-            disabled={pending || !statusChanged}
-            className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            {pending && statusChanged ? "Saving…" : "Save status"}
-          </button>
-        </div>
+              {GALLERY_STATUS_LABELS[value]}
+            </button>
+          );
+        })}
       </div>
 
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-stone-500">
-          Share links
-        </p>
-        <p className="mt-1 text-xs text-stone-500">
-          New links are shown once. Existing rows only show the label and dates —
-          the secret is not stored in readable form.
-        </p>
-
-        {tokens.length === 0 ? (
-          <p className="mt-3 text-sm text-stone-600">No share links yet.</p>
-        ) : (
-          <ul className="mt-3 space-y-2">
-            {tokens.map((token) => {
-              const revoked = toDate(token.revokedAt);
-              const expires = toDate(token.expiresAt);
-              return (
-                <li
-                  key={token.id}
-                  className="flex flex-col gap-2 rounded-lg border border-stone-200 bg-stone-50/80 px-3 py-3 sm:flex-row sm:items-center sm:justify-between"
-                >
-                  <div className="min-w-0">
-                    <p className="text-sm text-stone-800">
-                      {token.label?.trim() ? token.label : "Untitled link"}
-                    </p>
-                    <p className="mt-0.5 text-xs text-stone-500">
-                      Created {formatInquiryDateTime(requiredDate(token.createdAt))}
-                      {expires ? ` · Expires ${formatInquiryDateTime(expires)}` : ""}
-                      {revoked
-                        ? ` · Revoked ${formatInquiryDateTime(revoked)}`
-                        : ""}
-                    </p>
-                  </div>
-                  {revoked ? (
-                    <span className="shrink-0 text-xs text-stone-400">Revoked</span>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleRevoke(token.id)}
-                      disabled={pending}
-                      className="shrink-0 rounded-lg border border-stone-300 bg-white px-3 py-1.5 text-xs font-medium text-stone-700 hover:border-red-300 hover:text-red-800 disabled:opacity-60"
-                    >
-                      Revoke
-                    </button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-
-        <form onSubmit={handleCreateLink} className="mt-4 space-y-3">
-          <div>
-            <label
-              htmlFor={`link-label-${galleryId}`}
-              className="text-xs font-medium uppercase tracking-wide text-stone-500"
+      {tokens.length > 0 ? (
+        <ul className="divide-y divide-stone-100 overflow-hidden rounded-lg border border-stone-200">
+          {tokens.map((token) => (
+            <li
+              key={token.id}
+              className="flex items-center justify-between gap-3 bg-white px-3 py-2.5"
             >
-              New link label (optional)
-            </label>
-            <input
-              id={`link-label-${galleryId}`}
-              value={label}
-              onChange={(e) => setLabel(e.target.value)}
-              disabled={pending || String(initialStatus) === "archived"}
-              maxLength={80}
-              placeholder="e.g. Sophie — June 2026"
-              className="mt-1 w-full rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
-            />
-          </div>
+              <span className="min-w-0 truncate text-sm text-stone-800">
+                {token.label?.trim() || "Share link"}
+              </span>
+              <button
+                type="button"
+                onClick={() => handleRevoke(token.id)}
+                disabled={pending}
+                className="shrink-0 text-sm text-stone-500 hover:text-red-700 disabled:opacity-60"
+              >
+                Revoke
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+
+      {!archived ? (
+        <form onSubmit={handleCreateLink} className="flex gap-2">
+          <input
+            value={label}
+            onChange={(e) => setLabel(e.target.value)}
+            disabled={pending}
+            maxLength={80}
+            placeholder="Link name"
+            aria-label="Link name"
+            className="min-w-0 flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
+          />
           <button
             type="submit"
-            disabled={pending || String(initialStatus) === "archived"}
-            className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
+            disabled={pending}
+            className="btn-primary shrink-0 px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {pending ? "Please wait…" : "Create share link"}
+            {pending ? "…" : "Create link"}
           </button>
         </form>
+      ) : null}
 
-        {shareUrl ? (
-          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-              Copy this link now — it will not be shown again
-            </p>
-            <p className="mt-2 break-all font-mono text-xs text-stone-800">
-              {shareUrl}
-            </p>
-            <button
-              type="button"
-              onClick={handleCopy}
-              className="mt-3 rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-medium text-amber-950 hover:bg-amber-100"
-            >
-              {copied ? "Copied" : "Copy link"}
-            </button>
-          </div>
-        ) : null}
-
-        {error ? (
-          <p className="mt-3 text-xs text-red-700" role="alert">
-            {error}
+      {shareUrl ? (
+        <div className="flex items-center gap-2 rounded-lg border border-[#5c6b4a]/25 bg-[#5c6b4a]/5 px-3 py-2">
+          <p className="min-w-0 flex-1 truncate font-mono text-xs text-stone-800">
+            {shareUrl}
           </p>
-        ) : null}
-      </div>
+          <button
+            type="button"
+            onClick={handleCopy}
+            className="shrink-0 rounded-md bg-[#5c6b4a] px-3 py-1.5 text-xs font-medium text-white"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+      ) : null}
+
+      {error ? (
+        <p className="text-sm text-red-700" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

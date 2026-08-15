@@ -73,10 +73,6 @@ export default async function AdminGalleriesPage() {
             </Link>
           </p>
           <h1 className="section-title mt-2">Client galleries</h1>
-          <p className="mt-2 text-sm text-stone-600">
-            View registered galleries and create share links. Photo upload stays
-            on the CLI for now.
-          </p>
         </div>
         <AdminLogoutButton />
       </header>
