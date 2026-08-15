@@ -1,6 +1,6 @@
-# Admin booking inquiries viewer
+# Admin
 
-Private route to read saved booking inquiries (no edit/delete in v1).
+Private routes for booking inquiries and client gallery share links.
 
 ## URLs
 
@@ -8,7 +8,8 @@ Private route to read saved booking inquiries (no edit/delete in v1).
 |------|---------|
 | `/admin` | Dashboard (summary + navigation) |
 | `/admin/login` | Password/token sign-in |
-| `/admin/inquiries` | Inquiry list (newest first) |
+| `/admin/inquiries` | Inquiry list and workflow (newest first) |
+| `/admin/galleries` | Registered galleries, status, and share links |
 
 Pages use `robots: noindex` metadata. Admin secrets are never sent to the browser as `NEXT_PUBLIC_*`.
 
@@ -41,6 +42,16 @@ Migration: `20250603220000_booking_inquiry_spam_assessment`
 
 The inquiry list is **collapsed by default** (native `<details>` rows). Tap a row to expand full contact info, message, and spam details.
 
+## Client galleries
+
+`/admin/galleries` lists galleries already registered (CLI `register-gallery`). From a row you can:
+
+- Change status (`draft` / `active` / `archived`)
+- Create a client share URL (shown **once**; store it before leaving the page)
+- Revoke existing links
+
+Photo upload to R2 is still CLI-only. Creating a share link requires `GALLERY_TOKEN_PEPPER` (same as gallery sessions). Share URLs use `NEXT_PUBLIC_APP_URL`.
+
 ## Local test
 
 ```bash
@@ -51,8 +62,9 @@ npm run dev
 1. Open `/admin/inquiries` — should redirect to `/admin/login`.
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
-4. View page source — no admin secret in HTML/JS.
-5. Sign out — returns to login.
+4. Open `/admin/galleries` — lists registered galleries (or an empty state).
+5. View page source — no admin secret in HTML/JS.
+6. Sign out — returns to login.
 
 ## Production deploy
 

@@ -26,7 +26,7 @@ export default async function AdminLoginPage({ searchParams }: PageProps) {
       <p className="eyebrow">Private admin</p>
       <h1 className="section-title mt-3">Sign in</h1>
       <p className="mt-4 text-sm leading-relaxed text-stone-600">
-        Booking inquiries only. Not indexed by search engines.
+        Internal tools. Not indexed by search engines.
       </p>
 
       {!configured ? (

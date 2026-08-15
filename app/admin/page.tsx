@@ -204,8 +204,8 @@ export default async function AdminDashboardPage() {
         />
         <AdminNavCard
           title="Client galleries"
-          description="Upload and share private client galleries."
-          disabled
+          description="View registered galleries and create client share links."
+          href="/admin/galleries"
         />
         <AdminNavCard
           title="Payments & invoices"

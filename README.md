@@ -52,10 +52,11 @@ Prints a one-time share URL: `https://yoursite.com/g/{slug}?t=...`
 3. `/g/{slug}` loads photos via signed URLs (display uses `thumb ?? web ?? original`; MVP uses originals).
 4. Download requests a short-lived signed URL for the original only.
 
-### Scripts only (no admin HTTP API)
+### Register and share
 
-- `npm run register-gallery`
-- `npm run create-gallery-token`
+- `npm run register-gallery` — create DB rows for existing R2 files
+- `/admin/galleries` — view galleries and create/revoke client share links (after signing in)
+- `npm run create-gallery-token` — CLI fallback for share links
 
 R2 secret keys and token peppers stay on the server; the browser only receives presigned URLs.
 
