@@ -6,7 +6,7 @@ Private routes for booking inquiries, clients, and gallery share links.
 
 | Path | Purpose |
 |------|---------|
-| `/admin` | Dashboard (summary + navigation) |
+| `/admin` | Dashboard |
 | `/admin/login` | Password/token sign-in |
 | `/admin/inquiries` | Inquiry list and workflow (newest first) |
 | `/admin/clients` | Clients converted from inquiries (or added by hand) |
