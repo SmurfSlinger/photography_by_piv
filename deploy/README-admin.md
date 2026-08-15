@@ -76,9 +76,10 @@ npm run dev
 1. Open `/admin/inquiries` — should redirect to `/admin/login`.
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
-4. Open an inquiry, contact/schedule as needed, then **Create client** (or set status to Converted to booking). From the client, make a gallery and upload photos (requires R2).
-5. View page source — no admin secret in HTML/JS.
-6. Sign out — returns to login.
+4. Optional: `npm run seed-example-inquiry` to add a sample wedding request.
+5. Open an inquiry, contact/schedule as needed, then **Create client** (or set status to Converted to booking). From the client, make a gallery and upload photos (requires R2).
+6. View page source — no admin secret in HTML/JS.
+7. Sign out — returns to login.
 
 ## Production deploy
 
