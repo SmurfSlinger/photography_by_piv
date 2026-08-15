@@ -97,7 +97,7 @@ export default async function AdminDashboardPage() {
           <BookingDayCalendar
             selectedDate={null}
             occupied={occupied}
-            hrefForDate={bookingHref}
+            linkBookings
           />
         </div>
         {upcoming.length > 0 ? (

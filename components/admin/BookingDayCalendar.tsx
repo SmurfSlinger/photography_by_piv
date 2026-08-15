@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import {
+  bookingHref,
   formatBookedDate,
   monthGrid,
   monthTitle,
@@ -25,7 +26,7 @@ type Props = {
   currentClientId?: string;
   hintDates?: HintDate[];
   onSelect?: (date: string) => void;
-  hrefForDate?: (booking: OccupiedBooking) => string;
+  linkBookings?: boolean;
 };
 
 function initialMonth(selectedDate: string | null): { year: number; monthIndex0: number } {
@@ -44,7 +45,7 @@ export default function BookingDayCalendar({
   currentClientId,
   hintDates = [],
   onSelect,
-  hrefForDate,
+  linkBookings = false,
 }: Props) {
   const [{ year, monthIndex0 }, setMonth] = useState(() =>
     initialMonth(selectedDate)
@@ -170,11 +171,11 @@ export default function BookingDayCalendar({
             </>
           );
 
-          if (!interactive && hrefForDate && single) {
+          if (!interactive && linkBookings && single) {
             return (
               <a
                 key={cell.iso}
-                href={hrefForDate(single)}
+                href={bookingHref(single)}
                 className={className}
                 aria-label={labelParts.join(", ")}
                 title={names}
