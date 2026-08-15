@@ -70,7 +70,7 @@ export default function Home() {
               src={about.imageSrc}
               alt={about.imageAlt}
               fill
-              className="object-cover"
+              className={about.imageCrop}
               sizes="(max-width: 768px) 90vw, 384px"
             />
           </div>

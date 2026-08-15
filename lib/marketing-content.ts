@@ -151,6 +151,8 @@ export const about = {
   heading: "About Me",
   name: "Piv",
   imageSrc: marketingSrc("IMG_7732.jpg"),
+  /** 4:5 frame + object-cover. Nudge Y to keep face vs camera in frame. */
+  imageCrop: "object-cover object-[50%_35%]",
   imageAlt: "Piv, photographer based in Northern Utah",
   paragraphs: [
     "Hi, I'm Piv! I'm a photographer based in Northern Utah. I love capturing memories for the people around me, and I love meeting new people through photography.",
