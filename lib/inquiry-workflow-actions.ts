@@ -8,6 +8,7 @@ import {
   workflowTimestampsForStatusChange,
   type InquiryStatusValue,
 } from "@/lib/booking-inquiry-admin";
+import { ensureClientForInquiry } from "@/lib/client-from-inquiry";
 import { prisma } from "@/lib/prisma";
 
 export type InquiryWorkflowActionResult =
@@ -46,6 +47,15 @@ export async function updateInquiryWorkflow(
   }
 
   const { status: nextStatus, adminNotes } = parsed.data;
+
+  if (nextStatus === "converted_to_booking") {
+    const ensured = await ensureClientForInquiry(inquiryId);
+    if (!ensured.ok) {
+      return { ok: false, error: ensured.error };
+    }
+    revalidatePath(`/admin/clients/${ensured.clientId}`);
+  }
+
   const timestampUpdates =
     nextStatus !== undefined
       ? workflowTimestampsForStatusChange(nextStatus, {
@@ -66,6 +76,7 @@ export async function updateInquiryWorkflow(
 
   revalidatePath("/admin");
   revalidatePath("/admin/inquiries");
+  revalidatePath("/admin/clients");
 
   return { ok: true };
 }

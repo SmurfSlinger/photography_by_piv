@@ -7,6 +7,12 @@ import GalleryList, {
   type AdminGalleryRow,
 } from "@/components/admin/GalleryList";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import {
+  inquiryStatusBadgeClass,
+  inquiryStatusLabel,
+  sessionTypeLabel,
+  formatInquiryDateTime,
+} from "@/lib/booking-inquiry-display";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -30,6 +36,16 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
         orderBy: { createdAt: "desc" },
         include: {
           _count: { select: { photos: true } },
+        },
+      },
+      inquiries: {
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          status: true,
+          createdAt: true,
+          sessionType: true,
+          sessionTypeOther: true,
         },
       },
     },
@@ -84,6 +100,38 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           initialName={client.name}
           initialEmail={client.email}
         />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-4 font-serif text-lg text-stone-900">Booking inquiries</h2>
+        {client.inquiries.length === 0 ? (
+          <p className="text-sm text-stone-500">
+            No booking inquiry is linked. This client was added manually.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {client.inquiries.map((inquiry) => (
+              <li
+                key={inquiry.id}
+                className="flex items-center justify-between gap-3 rounded-lg border border-stone-200 bg-white px-4 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-stone-800">
+                    {sessionTypeLabel(inquiry)}
+                  </p>
+                  <p className="mt-0.5 text-xs text-stone-500">
+                    {formatInquiryDateTime(inquiry.createdAt)}
+                  </p>
+                </div>
+                <span
+                  className={`shrink-0 rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryStatusBadgeClass(inquiry.status)}`}
+                >
+                  {inquiryStatusLabel(inquiry.status)}
+                </span>
+              </li>
+            ))}
+          </ul>
+        )}
       </section>
 
       <section className="mt-10">

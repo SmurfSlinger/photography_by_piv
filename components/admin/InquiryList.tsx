@@ -40,6 +40,8 @@ function InquiryDetails({ item }: { item: InquiryWithSpam }) {
         adminNotes={inquiry.adminNotes}
         contactedAt={inquiry.contactedAt}
         archivedAt={inquiry.archivedAt}
+        clientId={item.client?.id ?? null}
+        clientName={item.client?.name ?? null}
       />
 
       {spam.flagged && spam.reasons.length > 0 ? (

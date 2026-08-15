@@ -29,7 +29,7 @@ npm run db:migrate   # local development
 
 ### Create a gallery
 
-In `/admin` (after signing in): create a **client**, then **New gallery** for that client, upload photos, set it Active, then create a share link.
+In `/admin` (after signing in): work an inquiry (contact → schedule → convert/create client), then **New gallery**, upload photos, set it Active, then create a share link.
 
 Photos are stored in R2 at `galleries/{slug}/{filename}`. Each file can be up to 50 MB.
 
@@ -60,7 +60,8 @@ Prints a one-time share URL: `https://yoursite.com/g/{slug}?t=...`
 
 ### Register and share
 
-- `/admin/clients` — create client records (after signing in)
+- `/admin/inquiries` — contact, schedule, then convert/create a client
+- `/admin/clients` — clients from inquiries, or add someone by hand
 - `/admin/galleries` — create galleries for a client, upload photos, and create/revoke share links
 - `npm run register-gallery` — CLI fallback to create DB rows for existing R2 files
 - `npm run create-gallery-token` — CLI fallback for share links

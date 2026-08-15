@@ -26,6 +26,10 @@ export default async function NewClientPage() {
             </Link>
           </p>
           <h1 className="section-title mt-2">New client</h1>
+          <p className="mt-2 text-sm text-stone-600">
+            For someone who didn’t send a booking request. The usual path is
+            converting an inquiry.
+          </p>
         </div>
         <AdminLogoutButton />
       </header>

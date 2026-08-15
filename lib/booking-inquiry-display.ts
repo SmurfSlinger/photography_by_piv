@@ -59,7 +59,9 @@ export function contactMethodsLabel(methods: string[]): string {
     .join(", ");
 }
 
-export function sessionTypeLabel(inquiry: BookingInquiry): string {
+export function sessionTypeLabel(
+  inquiry: Pick<BookingInquiry, "sessionType" | "sessionTypeOther">
+): string {
   if (inquiry.sessionType === "other" && inquiry.sessionTypeOther) {
     return `Other — ${inquiry.sessionTypeOther}`;
   }
@@ -108,15 +110,19 @@ export function spamAssessmentSource(
 
 export type InquiryWithSpam = {
   inquiry: BookingInquiry;
+  client: { id: string; name: string } | null;
   spam: BookingSpamScoreResult;
   spamSource: "stored" | "recomputed";
 };
 
 export function inquiriesWithSpam(
-  inquiries: BookingInquiry[]
+  inquiries: (BookingInquiry & {
+    client?: { id: string; name: string } | null;
+  })[]
 ): InquiryWithSpam[] {
   return inquiries.map((inquiry) => ({
     inquiry,
+    client: inquiry.client ?? null,
     spam: spamAssessmentForInquiry(inquiry),
     spamSource: spamAssessmentSource(inquiry),
   }));

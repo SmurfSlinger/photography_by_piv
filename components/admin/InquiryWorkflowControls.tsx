@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -9,6 +10,7 @@ import {
   type InquiryStatusValue,
 } from "@/lib/booking-inquiry-admin";
 import { formatInquiryDateTime } from "@/lib/booking-inquiry-display";
+import { createClientFromInquiry } from "@/lib/client-admin-actions";
 import { updateInquiryWorkflow } from "@/lib/inquiry-workflow-actions";
 
 type Props = {
@@ -17,6 +19,8 @@ type Props = {
   adminNotes: string | null;
   contactedAt: Date | string | null;
   archivedAt: Date | string | null;
+  clientId: string | null;
+  clientName: string | null;
 };
 
 function toDate(value: Date | string | null): Date | null {
@@ -30,6 +34,8 @@ export default function InquiryWorkflowControls({
   adminNotes: initialNotes,
   contactedAt,
   archivedAt,
+  clientId,
+  clientName,
 }: Props) {
   const router = useRouter();
   const [status, setStatus] = useState(String(initialStatus));
@@ -65,6 +71,25 @@ export default function InquiryWorkflowControls({
       router.refresh();
     } catch {
       setError("Unable to save — try again");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function handleCreateClient() {
+    if (pending) return;
+    setPending(true);
+    setError(null);
+    try {
+      const result = await createClientFromInquiry(inquiryId);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.push(`/admin/clients/${result.clientId}`);
+      router.refresh();
+    } catch {
+      setError("Unable to create client — try again");
     } finally {
       setPending(false);
     }
@@ -143,6 +168,31 @@ export default function InquiryWorkflowControls({
         >
           {pending ? "Saving…" : "Save workflow"}
         </button>
+        {clientId ? (
+          <>
+            <Link
+              href={`/admin/clients/${clientId}`}
+              className="text-sm font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              {clientName ?? "Open client"}
+            </Link>
+            <Link
+              href={`/admin/galleries/new?clientId=${clientId}`}
+              className="text-sm font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              New gallery
+            </Link>
+          </>
+        ) : (
+          <button
+            type="button"
+            onClick={() => void handleCreateClient()}
+            disabled={pending}
+            className="rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Create client
+          </button>
+        )}
         {savedAt ? (
           <span className="text-xs text-stone-500">
             Saved {formatInquiryDateTime(savedAt)}

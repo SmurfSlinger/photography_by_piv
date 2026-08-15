@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { ensureClientForInquiry } from "@/lib/client-from-inquiry";
 import { isClientId, parseClientInput } from "@/lib/client-admin";
 import { prisma } from "@/lib/prisma";
 
@@ -19,6 +20,7 @@ function revalidateClientPaths(clientId?: string) {
   revalidatePath("/admin/clients");
   revalidatePath("/admin/galleries");
   revalidatePath("/admin/galleries/new");
+  revalidatePath("/admin/inquiries");
   if (clientId) {
     revalidatePath(`/admin/clients/${clientId}`);
   }
@@ -87,4 +89,30 @@ export async function updateClient(
   });
   revalidateClientPaths(clientId);
   return { ok: true };
+}
+
+export async function createClientFromInquiry(
+  inquiryId: string
+): Promise<CreateClientResult> {
+  if (!(await isAdminAuthenticated())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
+  if (!inquiryId?.trim()) {
+    return { ok: false, error: "Invalid inquiry" };
+  }
+
+  try {
+    const result = await ensureClientForInquiry(inquiryId, {
+      convertIfOpen: true,
+    });
+    if (!result.ok) {
+      return result;
+    }
+    revalidateClientPaths(result.clientId);
+    return result;
+  } catch (error) {
+    console.error("createClientFromInquiry failed", error);
+    return { ok: false, error: "Unable to create client from this inquiry." };
+  }
 }

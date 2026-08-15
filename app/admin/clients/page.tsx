@@ -53,13 +53,17 @@ export default async function AdminClientsPage() {
             </Link>
           </p>
           <h1 className="section-title mt-2">Clients</h1>
+          <p className="mt-2 text-sm text-stone-600">
+            Usually created from a booking inquiry. Add manually only if they
+            didn’t send a request.
+          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/admin/clients/new"
-            className="btn-primary !px-5 !py-2 text-sm"
+            className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:border-stone-400"
           >
-            New client
+            Add without inquiry
           </Link>
           <AdminLogoutButton />
         </div>

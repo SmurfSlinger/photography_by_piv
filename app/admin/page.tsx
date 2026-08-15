@@ -204,7 +204,7 @@ export default async function AdminDashboardPage() {
         />
         <AdminNavCard
           title="Clients"
-          description="Create client records to attach galleries and other work."
+          description="People converted from inquiries, or added by hand."
           href="/admin/clients"
         />
         <AdminNavCard

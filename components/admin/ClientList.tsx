@@ -11,12 +11,12 @@ export default function ClientList({ clients }: { clients: AdminClientRow[] }) {
   if (clients.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center text-stone-500">
-        No clients yet.{" "}
+        No clients yet. Convert a booking inquiry, or{" "}
         <Link
           href="/admin/clients/new"
           className="text-[#5c6b4a] underline-offset-2 hover:underline"
         >
-          New client
+          add without an inquiry
         </Link>
       </p>
     );

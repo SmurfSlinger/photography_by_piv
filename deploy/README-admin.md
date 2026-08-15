@@ -9,7 +9,7 @@ Private routes for booking inquiries, clients, and gallery share links.
 | `/admin` | Dashboard (summary + navigation) |
 | `/admin/login` | Password/token sign-in |
 | `/admin/inquiries` | Inquiry list and workflow (newest first) |
-| `/admin/clients` | Client records (prerequisite for galleries) |
+| `/admin/clients` | Clients converted from inquiries (or added by hand) |
 | `/admin/galleries` | Galleries, photo upload, status, and share links |
 
 Pages use `robots: noindex` metadata. Admin secrets are never sent to the browser as `NEXT_PUBLIC_*`.
@@ -43,11 +43,14 @@ Migration: `20250603220000_booking_inquiry_spam_assessment`
 
 The inquiry list is **collapsed by default** (native `<details>` rows). Tap a row to expand full contact info, message, and spam details.
 
+Usual path after a request: **New → Contacted → Scheduled → Converted to booking**. Converting (or tapping **Create client**) makes the client record. Then create a gallery and share link.
+
 ## Clients
 
-`/admin/clients` is the directory of people you work with. Create a client before making a gallery.
+`/admin/clients` is the directory of people you work with. Galleries attach to a client.
 
-- Tap **New client** — name and optional email
+- **Usual path:** convert a booking inquiry (creates and links the client)
+- **Manual path:** **Add without inquiry** for someone who did not send a request
 - Open a client to edit details or start a gallery for them
 
 ## Client galleries
@@ -73,7 +76,7 @@ npm run dev
 1. Open `/admin/inquiries` — should redirect to `/admin/login`.
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
-4. Open `/admin/clients` — create a client, then open `/admin/galleries` to make a draft and upload photos (requires R2).
+4. Open an inquiry, contact/schedule as needed, then **Create client** (or set status to Converted to booking). From the client, make a gallery and upload photos (requires R2).
 5. View page source — no admin secret in HTML/JS.
 6. Sign out — returns to login.
 

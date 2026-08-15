@@ -68,6 +68,9 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
         where,
         orderBy: { createdAt: "desc" },
         take: MAX_INQUIRIES,
+        include: {
+          client: { select: { id: true, name: true } },
+        },
       }),
       loadStatusCounts(),
     ]);
