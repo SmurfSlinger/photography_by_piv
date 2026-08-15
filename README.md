@@ -29,7 +29,7 @@ npm run db:migrate   # local development
 
 ### Create a gallery
 
-In `/admin/galleries` (after signing in): create a draft, upload photos, set it Active, then create a share link.
+In `/admin/galleries` (after signing in): tap **New gallery**, create a draft, upload photos, set it Active, then create a share link.
 
 Photos are stored in R2 at `galleries/{slug}/{filename}`. Each file can be up to 50 MB.
 

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
-import CreateGalleryForm from "@/components/admin/CreateGalleryForm";
 import GalleryList, {
   type AdminGalleryRow,
 } from "@/components/admin/GalleryList";
@@ -64,11 +63,18 @@ export default async function AdminGalleriesPage() {
           </p>
           <h1 className="section-title mt-2">Client galleries</h1>
         </div>
-        <AdminLogoutButton />
+        <div className="flex shrink-0 items-center gap-2">
+          <Link
+            href="/admin/galleries/new"
+            className="btn-primary !px-5 !py-2 text-sm"
+          >
+            New gallery
+          </Link>
+          <AdminLogoutButton />
+        </div>
       </header>
 
-      <div className="mt-8 space-y-6">
-        <CreateGalleryForm />
+      <div className="mt-8">
         <GalleryList galleries={galleries} />
       </div>
 

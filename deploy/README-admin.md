@@ -46,7 +46,7 @@ The inquiry list is **collapsed by default** (native `<details>` rows). Tap a ro
 
 `/admin/galleries` is where galleries are created and photos are uploaded.
 
-- **New gallery** — title, client, optional email, and URL slug. Always starts as Draft.
+- Tap **New gallery** — title, client, optional email, and URL slug. Always starts as Draft.
 - Open a gallery to **drop in photos** (stored in R2), set status, and create/revoke share links.
 - Draft is unpublished only. After leaving Draft, switch between Active and Archived (cannot return to Draft).
 - Share URLs are shown **once**; store them before leaving the page.
