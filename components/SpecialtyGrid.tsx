@@ -10,7 +10,6 @@ export default function SpecialtyGrid() {
           src={card.src}
           alt={card.alt}
           title={card.title}
-          subtitle={card.subtitle}
           className="h-full"
         />
       ))}

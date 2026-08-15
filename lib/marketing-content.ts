@@ -80,25 +80,21 @@ export const specialtyCards = [
     src: marketingSrc("photograhybypiv-241.jpg"),
     alt: "Wedding photography",
     title: "Weddings",
-    subtitle: "Ceremony, reception, and all the details in between",
   },
   {
     src: marketingSrc("photograhybypiv-168.jpg"),
     alt: "Couple photography session",
     title: "Couples",
-    subtitle: "Anniversaries, engagements, and just-because photos",
   },
   {
     src: marketingSrc("photograhybypiv-22.jpg"),
     alt: "Portrait photography session",
     title: "Portraits",
-    subtitle: "Individual, birthdays, and creative styled sessions",
   },
   {
     src: marketingSrc("B44A6929.jpg"),
     alt: "Family photography session",
     title: "Families",
-    subtitle: "Newborn, family photos, and milestones",
   },
 ] as const;
 
@@ -151,6 +147,8 @@ export const about = {
   heading: "About Me",
   name: "Piv",
   imageSrc: marketingSrc("IMG_7732.jpg"),
+  /** 4:5 frame + object-cover, anchored to the bottom so none of the waist/camera is clipped. */
+  imageCrop: "object-cover object-bottom",
   imageAlt: "Piv, photographer based in Northern Utah",
   paragraphs: [
     "Hi, I'm Piv! I'm a photographer based in Northern Utah. I love capturing memories for the people around me, and I love meeting new people through photography.",
