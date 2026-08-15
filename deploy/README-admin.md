@@ -44,13 +44,16 @@ The inquiry list is **collapsed by default** (native `<details>` rows). Tap a ro
 
 ## Client galleries
 
-`/admin/galleries` lists galleries already registered (CLI `register-gallery`). From a row you can:
+`/admin/galleries` is where galleries are created and photos are uploaded.
 
-- Change status: Draft is unpublished only. After leaving Draft, switch between Active and Archived (cannot return to Draft)
-- Create a client share URL (shown **once**; store it before leaving the page)
-- Revoke existing links
+- **New gallery** — title, client, optional email, and URL slug. Always starts as Draft.
+- Open a gallery to **drop in photos** (stored in R2), set status, and create/revoke share links.
+- Draft is unpublished only. After leaving Draft, switch between Active and Archived (cannot return to Draft).
+- Share URLs are shown **once**; store them before leaving the page.
 
-Photo upload to R2 is still CLI-only. Creating a share link requires `GALLERY_TOKEN_PEPPER` (same as gallery sessions). Share URLs use `NEXT_PUBLIC_APP_URL`.
+Photo files go to `galleries/{slug}/{filename}` in the private R2 bucket. Max 50 MB per file. Creating a share link requires `GALLERY_TOKEN_PEPPER`. Share URLs use `NEXT_PUBLIC_APP_URL`.
+
+The CLI (`npm run register-gallery`) remains a fallback for photos that are already in R2.
 
 ## Local test
 
@@ -62,7 +65,7 @@ npm run dev
 1. Open `/admin/inquiries` — should redirect to `/admin/login`.
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
-4. Open `/admin/galleries` — lists registered galleries (or an empty state).
+4. Open `/admin/galleries` — create a draft, open it, and upload photos (requires R2).
 5. View page source — no admin secret in HTML/JS.
 6. Sign out — returns to login.
 

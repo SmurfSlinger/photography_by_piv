@@ -7,6 +7,9 @@ const nextConfig: NextConfig = {
     "fedora-desktop.tail2ad18e.ts.net",
     "100.107.223.105",
   ],
+  experimental: {
+    proxyClientMaxBodySize: "50mb",
+  },
 };
 
 export default nextConfig;

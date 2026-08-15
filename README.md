@@ -27,7 +27,13 @@ npm run db:deploy    # production (R310)
 npm run db:migrate   # local development
 ```
 
-### Register a gallery (existing R2 files)
+### Create a gallery
+
+In `/admin/galleries` (after signing in): create a draft, upload photos, set it Active, then create a share link.
+
+Photos are stored in R2 at `galleries/{slug}/{filename}`. Each file can be up to 50 MB.
+
+### Register a gallery from existing R2 files (CLI fallback)
 
 Edit a manifest (see [`scripts/seed/example.json`](scripts/seed/example.json)), then:
 
@@ -54,8 +60,8 @@ Prints a one-time share URL: `https://yoursite.com/g/{slug}?t=...`
 
 ### Register and share
 
-- `npm run register-gallery` — create DB rows for existing R2 files
-- `/admin/galleries` — view galleries and create/revoke client share links (after signing in)
+- `/admin/galleries` — create galleries, upload photos, and create/revoke client share links (after signing in)
+- `npm run register-gallery` — CLI fallback to create DB rows for existing R2 files
 - `npm run create-gallery-token` — CLI fallback for share links
 
 R2 secret keys and token peppers stay on the server; the browser only receives presigned URLs.

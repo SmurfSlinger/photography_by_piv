@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
+import CreateGalleryForm from "@/components/admin/CreateGalleryForm";
 import GalleryList, {
   type AdminGalleryRow,
 } from "@/components/admin/GalleryList";
@@ -22,16 +23,6 @@ export default async function AdminGalleriesPage() {
       include: {
         client: { select: { name: true, email: true } },
         _count: { select: { photos: true } },
-        accessTokens: {
-          orderBy: { createdAt: "desc" },
-          select: {
-            id: true,
-            label: true,
-            createdAt: true,
-            expiresAt: true,
-            revokedAt: true,
-          },
-        },
       },
     });
 
@@ -45,7 +36,6 @@ export default async function AdminGalleriesPage() {
       photoCount: row._count.photos,
       clientName: row.client.name,
       clientEmail: row.client.email,
-      tokens: row.accessTokens,
     }));
   } catch (error) {
     console.error("admin galleries load failed", error);
@@ -77,7 +67,8 @@ export default async function AdminGalleriesPage() {
         <AdminLogoutButton />
       </header>
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-6">
+        <CreateGalleryForm />
         <GalleryList galleries={galleries} />
       </div>
 
