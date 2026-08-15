@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 
 import AdminLogoutButton from "@/components/admin/AdminLogoutButton";
+import ClientBookingControls from "@/components/admin/ClientBookingControls";
 import ClientForm from "@/components/admin/ClientForm";
 import GalleryList, {
   type AdminGalleryRow,
@@ -11,6 +12,7 @@ import {
   formatInquiryDateTime,
   sessionTypeLabel,
 } from "@/lib/booking-inquiry-display";
+import { loadOccupiedBookings } from "@/lib/inquiry-bookings";
 import {
   formatBookedDate,
   inquiryPhase,
@@ -62,6 +64,19 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
     notFound();
   }
 
+  const occupied = await loadOccupiedBookings().catch((error) => {
+    console.error("admin client bookings failed", error);
+    return [] as Awaited<ReturnType<typeof loadOccupiedBookings>>;
+  });
+
+  const bookedInquiry = client.inquiries.find(
+    (inquiry) => inquiryPhase(inquiry) === "booked"
+  );
+  const openInquiry = client.inquiries.find((inquiry) => {
+    const phase = inquiryPhase(inquiry);
+    return phase === "new" || phase === "contacted";
+  });
+
   const galleries: AdminGalleryRow[] = client.galleries.map((gallery) => ({
     id: gallery.id,
     slug: gallery.slug,
@@ -107,6 +122,43 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           initialName={client.name}
           initialEmail={client.email}
         />
+      </section>
+
+      <section className="mt-10">
+        <h2 className="mb-4 font-serif text-lg text-stone-900">Booking</h2>
+        {bookedInquiry ? (
+          <p className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
+            Booked from an inquiry
+            {isoDateFromValue(bookedInquiry.scheduledAt)
+              ? ` for ${formatBookedDate(bookedInquiry.scheduledAt)}`
+              : ""}
+            .{" "}
+            <Link
+              href={`/admin/inquiries?open=${bookedInquiry.id}`}
+              className="font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              Open inquiry
+            </Link>
+          </p>
+        ) : openInquiry ? (
+          <p className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
+            This client came from an inquiry. Mark it contacted, then book the
+            day there.{" "}
+            <Link
+              href={`/admin/inquiries?open=${openInquiry.id}`}
+              className="font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
+            >
+              Open inquiry
+            </Link>
+          </p>
+        ) : (
+          <ClientBookingControls
+            clientId={client.id}
+            clientName={client.name}
+            scheduledAt={client.scheduledAt}
+            occupied={occupied}
+          />
+        )}
       </section>
 
       <section className="mt-10">

@@ -32,9 +32,20 @@ const PHASE_BADGE_CLASSES: Record<InquiryPhase, string> = {
 
 export type OccupiedBooking = {
   date: string;
-  inquiryId: string;
   name: string;
+  inquiryId?: string;
+  clientId?: string;
 };
+
+export function bookingHref(booking: OccupiedBooking): string {
+  if (booking.inquiryId) return `/admin/inquiries?open=${booking.inquiryId}`;
+  if (booking.clientId) return `/admin/clients/${booking.clientId}`;
+  return "/admin";
+}
+
+export function bookingKey(booking: OccupiedBooking): string {
+  return booking.inquiryId ?? booking.clientId ?? `${booking.name}-${booking.date}`;
+}
 
 export type InquiryPhaseFields = {
   status: string;

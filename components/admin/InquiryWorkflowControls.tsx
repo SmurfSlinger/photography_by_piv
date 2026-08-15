@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
-import BookingDayCalendar from "@/components/admin/BookingDayCalendar";
+import BookDaySection from "@/components/admin/BookDaySection";
 import { formatInquiryDateTime } from "@/lib/booking-inquiry-display";
 import {
   bookInquiryOnDate,
@@ -77,6 +77,7 @@ export default function InquiryWorkflowControls({
   const archived = toDate(archivedAt);
   const contactedChecked =
     contactedOverride ?? (phase !== "new" && phase !== "canceled");
+  const canBook = phase === "booked" || phase === "contacted";
   const notesChanged =
     (adminNotes.trim() || null) !== (initialNotes?.trim() || null);
 
@@ -111,10 +112,6 @@ export default function InquiryWorkflowControls({
     }
   }
 
-  const bookedForSelected = Boolean(
-    selectedDate && phase === "booked" && selectedDate === bookedDate
-  );
-
   return (
     <div className="mb-5 rounded-lg border border-[#5c6b4a]/20 bg-[#5c6b4a]/5 px-4 py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -129,32 +126,6 @@ export default function InquiryWorkflowControls({
             : inquiryPhaseLabel(phase)}
         </span>
       </div>
-
-      {phase !== "canceled" ? (
-        <label className="mt-4 flex items-center gap-2 text-sm text-stone-800">
-          <input
-            type="checkbox"
-            checked={contactedChecked}
-            disabled={pending || phase === "booked"}
-            onChange={(e) => {
-              const next = e.target.checked;
-              setContactedOverride(next);
-              void run(() => setInquiryContacted(inquiryId, next)).then(
-                (ok) => {
-                  if (!ok) setContactedOverride(null);
-                }
-              );
-            }}
-            className="size-4 rounded border-stone-300 text-[#5c6b4a] focus:ring-[#5c6b4a]"
-          />
-          Contacted
-          {contacted ? (
-            <span className="text-xs text-stone-500">
-              {formatInquiryDateTime(contacted)}
-            </span>
-          ) : null}
-        </label>
-      ) : null}
 
       {phase === "canceled" ? (
         <div className="mt-4">
@@ -173,73 +144,77 @@ export default function InquiryWorkflowControls({
           </button>
         </div>
       ) : (
-        <div className="mt-4">
-          <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
-            {phase === "booked" ? "Booked day" : "Book a day"}
-          </p>
-          {phase === "booked" && bookedDate ? (
-            <p className="mt-1 text-sm text-stone-800">
-              {clientName ?? "Client"} is booked for{" "}
-              {formatBookedDate(bookedDate, "long")}.
+        <>
+          <section className="mt-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+              Contact
             </p>
-          ) : (
-            <p className="mt-1 text-sm text-stone-600">
-              Pick a free day. That creates the client and holds the date.
-            </p>
-          )}
-
-          <div className="mt-3 rounded-lg border border-stone-200 bg-white px-3 py-3">
-            <BookingDayCalendar
-              selectedDate={selectedDate}
-              occupied={occupied}
-              currentInquiryId={inquiryId}
-              hintDates={hintDates}
-              onSelect={setSelectedDate}
-            />
-          </div>
-
-          {hintDates.length > 0 ? (
-            <p className="mt-2 text-xs text-stone-500">
-              {hintDates
-                .map(
-                  (hint) =>
-                    `${hint.label} ${formatBookedDate(hint.date)}`
-                )
-                .join(" · ")}
-            </p>
-          ) : null}
-
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                if (!selectedDate) return;
-                void run(() => bookInquiryOnDate(inquiryId, selectedDate));
-              }}
-              disabled={pending || !selectedDate || bookedForSelected}
-              className="btn-primary px-4 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {phase === "booked"
-                ? "Update date"
-                : selectedDate
-                  ? `Book ${formatBookedDate(selectedDate)}`
-                  : "Book this day"}
-            </button>
-            {phase === "booked" ? (
-              <button
-                type="button"
-                onClick={() => void run(() => cancelInquiryBooking(inquiryId))}
-                disabled={pending}
-                className="rounded-full border border-stone-300 bg-white px-4 py-2 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                Cancel booking
-              </button>
+            <label className="mt-2 flex items-center gap-2 text-sm text-stone-800">
+              <input
+                type="checkbox"
+                checked={contactedChecked}
+                disabled={pending || phase === "booked"}
+                onChange={(e) => {
+                  const next = e.target.checked;
+                  setContactedOverride(next);
+                  void run(() => setInquiryContacted(inquiryId, next)).then(
+                    (ok) => {
+                      if (!ok) setContactedOverride(null);
+                    }
+                  );
+                }}
+                className="size-4 rounded border-stone-300 text-[#5c6b4a] focus:ring-[#5c6b4a]"
+              />
+              Contacted
+              {contacted ? (
+                <span className="text-xs text-stone-500">
+                  {formatInquiryDateTime(contacted)}
+                </span>
+              ) : null}
+            </label>
+            {!contactedChecked ? (
+              <p className="mt-2 text-sm text-stone-600">
+                Check this after you reply. Booking unlocks next.
+              </p>
             ) : null}
-          </div>
-        </div>
+          </section>
+
+          <section className="mt-4 border-t border-[#5c6b4a]/15 pt-4">
+            <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
+              {phase === "booked" ? "Booked day" : "Book a day"}
+            </p>
+            {canBook ? (
+              <div className="mt-2">
+                <BookDaySection
+                  selectedDate={selectedDate}
+                  onSelect={setSelectedDate}
+                  occupied={occupied}
+                  currentInquiryId={inquiryId}
+                  bookedDate={bookedDate}
+                  bookedName={clientName}
+                  hintDates={hintDates}
+                  pending={pending}
+                  onBook={() => {
+                    if (!selectedDate) return;
+                    void run(() => bookInquiryOnDate(inquiryId, selectedDate));
+                  }}
+                  onCancel={
+                    phase === "booked"
+                      ? () => void run(() => cancelInquiryBooking(inquiryId))
+                      : undefined
+                  }
+                />
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-stone-500">
+                Calendar stays put until this inquiry is marked contacted.
+              </p>
+            )}
+          </section>
+        </>
       )}
 
-      <div className="mt-4">
+      <section className="mt-4 border-t border-[#5c6b4a]/15 pt-4">
         <label
           htmlFor={`notes-${inquiryId}`}
           className="text-xs font-medium uppercase tracking-wide text-stone-500"
@@ -255,7 +230,7 @@ export default function InquiryWorkflowControls({
           placeholder="Follow-up notes, call outcomes…"
           className="mt-1 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
         />
-      </div>
+      </section>
 
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button

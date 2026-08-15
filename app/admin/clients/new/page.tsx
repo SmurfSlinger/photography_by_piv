@@ -27,8 +27,9 @@ export default async function NewClientPage() {
           </p>
           <h1 className="section-title mt-2">New client</h1>
           <p className="mt-2 text-sm text-stone-600">
-            For someone who didn’t send a booking request. The usual path is
-            converting an inquiry.
+            For someone who didn’t send a booking request. After you save, you
+            can book a day here without marking contacted. The usual path is
+            still an inquiry.
           </p>
         </div>
         <AdminLogoutButton />

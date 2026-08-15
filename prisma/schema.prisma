@@ -31,12 +31,13 @@ enum InquiryStatus {
 }
 
 model Client {
-  id        String            @id @default(uuid())
-  name      String
-  email     String?
-  createdAt DateTime          @default(now()) @map("created_at")
-  galleries Gallery[]
-  inquiries BookingInquiry[]
+  id          String           @id @default(uuid())
+  name        String
+  email       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  scheduledAt DateTime?        @map("scheduled_at")
+  galleries   Gallery[]
+  inquiries   BookingInquiry[]
 
   @@map("clients")
 }

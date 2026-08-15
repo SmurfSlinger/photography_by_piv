@@ -22,6 +22,7 @@ type Props = {
   selectedDate: string | null;
   occupied: OccupiedBooking[];
   currentInquiryId?: string;
+  currentClientId?: string;
   hintDates?: HintDate[];
   onSelect?: (date: string) => void;
   hrefForDate?: (booking: OccupiedBooking) => string;
@@ -40,6 +41,7 @@ export default function BookingDayCalendar({
   selectedDate,
   occupied,
   currentInquiryId,
+  currentClientId,
   hintDates = [],
   onSelect,
   hrefForDate,
@@ -119,7 +121,9 @@ export default function BookingDayCalendar({
         {cells.map((cell) => {
           const booking = occupiedByDate.get(cell.iso);
           const isOwn = Boolean(
-            booking && currentInquiryId && booking.inquiryId === currentInquiryId
+            booking &&
+              ((currentInquiryId && booking.inquiryId === currentInquiryId) ||
+                (currentClientId && booking.clientId === currentClientId))
           );
           const takenByOther = Boolean(booking && !isOwn && interactive);
           const bookedOnDashboard = Boolean(booking && !interactive);

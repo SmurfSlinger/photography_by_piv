@@ -101,11 +101,15 @@ export async function bookInquiryOnDate(
   const loaded = await requireInquiry(inquiryId);
   if (!loaded.ok) return loaded;
 
-  if (inquiryPhase(loaded.inquiry) === "canceled") {
+  const phase = inquiryPhase(loaded.inquiry);
+  if (phase === "canceled") {
     return { ok: false, error: "Reopen this inquiry before booking a day." };
   }
+  if (phase === "new") {
+    return { ok: false, error: "Mark contacted before booking a day." };
+  }
 
-  const taken = await findBookingOnDate(dateIso, inquiryId);
+  const taken = await findBookingOnDate(dateIso, { inquiryId });
   if (taken) {
     return {
       ok: false,
@@ -123,7 +127,6 @@ export async function bookInquiryOnDate(
     data: {
       status: "scheduled",
       scheduledAt,
-      contactedAt: loaded.inquiry.contactedAt ?? new Date(),
       archivedAt: null,
     },
   });

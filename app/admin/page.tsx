@@ -6,7 +6,12 @@ import AdminNavCard from "@/components/admin/AdminNavCard";
 import BookingDayCalendar from "@/components/admin/BookingDayCalendar";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { loadOccupiedBookings } from "@/lib/inquiry-bookings";
-import { formatBookedDate, todayIsoInDenver } from "@/lib/inquiry-phase";
+import {
+  bookingHref,
+  bookingKey,
+  formatBookedDate,
+  todayIsoInDenver,
+} from "@/lib/inquiry-phase";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -87,30 +92,20 @@ export default async function AdminDashboardPage() {
       ) : null}
 
       <section className="mt-8 rounded-xl border border-stone-200/80 bg-white px-5 py-5 shadow-sm">
-        <div className="flex items-baseline justify-between gap-3">
-          <h2 className="font-serif text-lg text-stone-900">Booked</h2>
-          <Link
-            href="/admin/inquiries?status=booked"
-            className="text-sm font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
-          >
-            All booked
-          </Link>
-        </div>
+        <h2 className="font-serif text-lg text-stone-900">Booked</h2>
         <div className="mt-4">
           <BookingDayCalendar
             selectedDate={null}
             occupied={occupied}
-            hrefForDate={(booking) =>
-              `/admin/inquiries?open=${booking.inquiryId}`
-            }
+            hrefForDate={bookingHref}
           />
         </div>
         {upcoming.length > 0 ? (
           <ul className="mt-5 divide-y divide-stone-100 border-t border-stone-100">
             {upcoming.slice(0, 8).map((booking) => (
-              <li key={booking.inquiryId}>
+              <li key={bookingKey(booking)}>
                 <Link
-                  href={`/admin/inquiries?open=${booking.inquiryId}`}
+                  href={bookingHref(booking)}
                   className="flex items-baseline justify-between gap-3 py-2.5 text-sm hover:text-[#3d4a32]"
                 >
                   <span className="font-medium text-stone-800">
@@ -125,7 +120,7 @@ export default async function AdminDashboardPage() {
           </ul>
         ) : (
           <p className="mt-4 text-sm text-stone-500">
-            No booked days yet. Open an inquiry and pick a day.
+            No booked days yet. Book from an inquiry or a client.
           </p>
         )}
       </section>

@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { ensureClientForInquiry } from "@/lib/client-from-inquiry";
 import { isClientId, parseClientInput } from "@/lib/client-admin";
+import { findBookingOnDate } from "@/lib/inquiry-bookings";
+import { utcNoonFromIso } from "@/lib/inquiry-phase";
 import { prisma } from "@/lib/prisma";
 
 export type ClientAdminActionResult =
@@ -86,6 +88,74 @@ export async function updateClient(
       name: parsed.data.name,
       email: parsed.data.email,
     },
+  });
+  revalidateClientPaths(clientId);
+  return { ok: true };
+}
+
+export async function bookClientOnDate(
+  clientId: string,
+  dateIso: string
+): Promise<ClientAdminActionResult> {
+  if (!(await isAdminAuthenticated())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
+  if (!isClientId(clientId)) {
+    return { ok: false, error: "Invalid client" };
+  }
+
+  const scheduledAt = utcNoonFromIso(dateIso);
+  if (!scheduledAt) {
+    return { ok: false, error: "Pick a valid day" };
+  }
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { id: true },
+  });
+  if (!client) {
+    return { ok: false, error: "Client not found" };
+  }
+
+  const taken = await findBookingOnDate(dateIso, { clientId });
+  if (taken) {
+    return { ok: false, error: `Already booked for ${taken.name} on that day.` };
+  }
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { scheduledAt },
+  });
+  revalidateClientPaths(clientId);
+  return { ok: true };
+}
+
+export async function cancelClientBooking(
+  clientId: string
+): Promise<ClientAdminActionResult> {
+  if (!(await isAdminAuthenticated())) {
+    return { ok: false, error: "Unauthorized" };
+  }
+
+  if (!isClientId(clientId)) {
+    return { ok: false, error: "Invalid client" };
+  }
+
+  const client = await prisma.client.findUnique({
+    where: { id: clientId },
+    select: { id: true, scheduledAt: true },
+  });
+  if (!client) {
+    return { ok: false, error: "Client not found" };
+  }
+  if (!client.scheduledAt) {
+    return { ok: false, error: "This client is not booked." };
+  }
+
+  await prisma.client.update({
+    where: { id: clientId },
+    data: { scheduledAt: null },
   });
   revalidateClientPaths(clientId);
   return { ok: true };
