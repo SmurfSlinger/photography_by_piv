@@ -7,13 +7,12 @@ import {
   sessionTypeLabel,
 } from "@/lib/booking-inquiry-display";
 import {
-  formatBookedDate,
   inquiryPhase,
   inquiryPhaseBadgeClass,
   inquiryPhaseLabel,
-  isoDateFromValue,
   type OccupiedBooking,
 } from "@/lib/inquiry-phase";
+import { formatBookedSlot } from "@/lib/inquiry-time";
 
 function Field({
   label,
@@ -42,7 +41,7 @@ function InquiryDetails({
   item: InquiryWithSpam;
   occupied: OccupiedBooking[];
 }) {
-  const { inquiry, spam, spamSource } = item;
+  const { inquiry, spam } = item;
 
   return (
     <div className="border-t border-stone-100 px-4 pb-5 pt-4 sm:px-5">
@@ -52,7 +51,7 @@ function InquiryDetails({
         adminNotes={inquiry.adminNotes}
         contactedAt={inquiry.contactedAt}
         scheduledAt={inquiry.scheduledAt}
-        archivedAt={inquiry.archivedAt}
+        scheduledEndAt={inquiry.scheduledEndAt}
         preferredDate={inquiry.preferredDate}
         backupDate={inquiry.backupDate}
         clientId={item.client?.id ?? null}
@@ -64,9 +63,6 @@ function InquiryDetails({
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
             Flagged
-            {spamSource === "recomputed"
-              ? " (recomputed — pre-migration inquiry)"
-              : ""}
           </p>
           <ul className="mt-2 list-inside list-disc text-sm text-amber-950">
             {spam.reasons.map((reason) => (
@@ -112,13 +108,12 @@ function InquiryRow({
 }) {
   const { inquiry, spam } = item;
   const phase = inquiryPhase(inquiry);
-  const bookedDate = isoDateFromValue(inquiry.scheduledAt);
   const preferred = formatInquiryDate(inquiry.preferredDate);
   const subtitleDate =
-    phase === "booked" && bookedDate
-      ? formatBookedDate(bookedDate)
+    phase === "booked" && inquiry.scheduledAt
+      ? formatBookedSlot(inquiry.scheduledAt, inquiry.scheduledEndAt)
       : preferred !== "—"
-        ? `Pref. ${preferred}`
+        ? preferred
         : null;
 
   return (

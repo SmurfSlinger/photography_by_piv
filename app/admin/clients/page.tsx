@@ -53,10 +53,6 @@ export default async function AdminClientsPage() {
             </Link>
           </p>
           <h1 className="section-title mt-2">Clients</h1>
-          <p className="mt-2 text-sm text-stone-600">
-            Usually created from a booking inquiry. Add manually only if they
-            didn’t send a request.
-          </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <Link

@@ -12,7 +12,6 @@ import {
 } from "@/lib/inquiry-bookings";
 import {
   INQUIRY_PHASES,
-  INQUIRY_PHASE_LABELS,
   parseInquiryPhaseFilter,
   type InquiryPhase,
 } from "@/lib/inquiry-phase";
@@ -100,12 +99,6 @@ export default async function AdminInquiriesPage({ searchParams }: PageProps) {
             </Link>
           </p>
           <h1 className="section-title mt-2">Booking inquiries</h1>
-          <p className="mt-2 text-sm text-stone-600">
-            Newest first · showing up to {MAX_INQUIRIES}
-            {phaseFilter
-              ? ` · ${INQUIRY_PHASE_LABELS[phaseFilter].toLowerCase()}`
-              : ""}
-          </p>
         </div>
         <AdminLogoutButton />
       </header>

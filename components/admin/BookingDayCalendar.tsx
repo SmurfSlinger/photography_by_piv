@@ -51,9 +51,11 @@ export default function BookingDayCalendar({
   );
 
   const occupiedByDate = useMemo(() => {
-    const map = new Map<string, OccupiedBooking>();
+    const map = new Map<string, OccupiedBooking[]>();
     for (const booking of occupied) {
-      map.set(booking.date, booking);
+      const list = map.get(booking.date) ?? [];
+      list.push(booking);
+      map.set(booking.date, list);
     }
     return map;
   }, [occupied]);
@@ -119,23 +121,20 @@ export default function BookingDayCalendar({
           </div>
         ))}
         {cells.map((cell) => {
-          const booking = occupiedByDate.get(cell.iso);
-          const isOwn = Boolean(
-            booking &&
-              ((currentInquiryId && booking.inquiryId === currentInquiryId) ||
-                (currentClientId && booking.clientId === currentClientId))
+          const slots = occupiedByDate.get(cell.iso) ?? [];
+          const own = slots.some(
+            (booking) =>
+              (currentInquiryId && booking.inquiryId === currentInquiryId) ||
+              (currentClientId && booking.clientId === currentClientId)
           );
-          const takenByOther = Boolean(booking && !isOwn && interactive);
-          const bookedOnDashboard = Boolean(booking && !interactive);
+          const hasBookings = slots.length > 0;
           const selected = selectedDate === cell.iso;
           const hint = hintByDate.get(cell.iso);
+          const names = slots.map((slot) => slot.name).join(", ");
           const labelParts = [
             formatBookedDate(cell.iso, "long"),
-            takenByOther || bookedOnDashboard
-              ? `booked for ${booking?.name}`
-              : null,
-            isOwn ? "this booking" : null,
-            hint && !booking ? hint : null,
+            hasBookings ? names : null,
+            hint && !hasBookings ? hint : null,
           ].filter(Boolean);
 
           const className = [
@@ -143,47 +142,58 @@ export default function BookingDayCalendar({
             cell.inMonth ? "text-stone-800" : "text-stone-300",
             selected
               ? "bg-[#5c6b4a] font-medium text-white"
-              : takenByOther
-                ? "bg-stone-100 text-stone-400"
-                : isOwn || bookedOnDashboard
-                  ? "bg-violet-100 font-medium text-violet-900"
+              : own
+                ? "bg-violet-100 font-medium text-violet-900"
+                : hasBookings
+                  ? "bg-violet-50 text-stone-800"
                   : interactive
                     ? "hover:bg-[#5c6b4a]/10"
                     : "",
             cell.iso === today && !selected
               ? "ring-1 ring-[#5c6b4a]/40"
               : "",
-            hint && !selected && !takenByOther && !bookedOnDashboard
-              ? "ring-1 ring-amber-300"
-              : "",
+            hint && !selected && !hasBookings ? "ring-1 ring-amber-300" : "",
           ]
             .filter(Boolean)
             .join(" ");
 
-          if (hrefForDate && booking) {
+          const single = slots.length === 1 ? slots[0] : null;
+          const inner = (
+            <>
+              {cell.day}
+              {hasBookings && !selected ? (
+                <span
+                  className="absolute bottom-1 left-1/2 size-1 -translate-x-1/2 rounded-full bg-violet-500"
+                  aria-hidden
+                />
+              ) : null}
+            </>
+          );
+
+          if (!interactive && hrefForDate && single) {
             return (
               <a
                 key={cell.iso}
-                href={hrefForDate(booking)}
+                href={hrefForDate(single)}
                 className={className}
                 aria-label={labelParts.join(", ")}
-                title={booking.name}
+                title={names}
               >
-                {cell.day}
+                {inner}
               </a>
             );
           }
 
-          if (!interactive || takenByOther) {
+          if (!interactive) {
             return (
               <div
                 key={cell.iso}
                 className={className}
                 aria-label={labelParts.join(", ")}
-                title={takenByOther ? booking?.name : undefined}
+                title={names || undefined}
                 role="gridcell"
               >
-                {cell.day}
+                {inner}
               </div>
             );
           }
@@ -195,9 +205,10 @@ export default function BookingDayCalendar({
               className={className}
               aria-label={labelParts.join(", ")}
               aria-pressed={selected}
+              title={names || undefined}
               onClick={() => onSelect?.(cell.iso)}
             >
-              {cell.day}
+              {inner}
             </button>
           );
         })}

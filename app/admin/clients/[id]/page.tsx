@@ -14,12 +14,11 @@ import {
 } from "@/lib/booking-inquiry-display";
 import { loadOccupiedBookings } from "@/lib/inquiry-bookings";
 import {
-  formatBookedDate,
   inquiryPhase,
   inquiryPhaseBadgeClass,
   inquiryPhaseLabel,
-  isoDateFromValue,
 } from "@/lib/inquiry-phase";
+import { formatBookedSlot } from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -52,6 +51,7 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
           status: true,
           createdAt: true,
           scheduledAt: true,
+          scheduledEndAt: true,
           contactedAt: true,
           sessionType: true,
           sessionTypeOther: true,
@@ -127,35 +127,27 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
       <section className="mt-10">
         <h2 className="mb-4 font-serif text-lg text-stone-900">Booking</h2>
         {bookedInquiry ? (
-          <p className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
-            Booked from an inquiry
-            {isoDateFromValue(bookedInquiry.scheduledAt)
-              ? ` for ${formatBookedDate(bookedInquiry.scheduledAt)}`
-              : ""}
-            .{" "}
-            <Link
-              href={`/admin/inquiries?open=${bookedInquiry.id}`}
-              className="font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
-            >
-              Open inquiry
-            </Link>
-          </p>
+          <Link
+            href={`/admin/inquiries?open=${bookedInquiry.id}`}
+            className="block rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-[#5c6b4a] underline-offset-2 hover:underline"
+          >
+            {formatBookedSlot(
+              bookedInquiry.scheduledAt,
+              bookedInquiry.scheduledEndAt
+            )}
+          </Link>
         ) : openInquiry ? (
-          <p className="rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-stone-600">
-            This client came from an inquiry. Mark it contacted, then book the
-            day there.{" "}
-            <Link
-              href={`/admin/inquiries?open=${openInquiry.id}`}
-              className="font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
-            >
-              Open inquiry
-            </Link>
-          </p>
+          <Link
+            href={`/admin/inquiries?open=${openInquiry.id}`}
+            className="block rounded-lg border border-stone-200 bg-white px-4 py-3 text-sm text-[#5c6b4a] underline-offset-2 hover:underline"
+          >
+            Inquiry
+          </Link>
         ) : (
           <ClientBookingControls
             clientId={client.id}
-            clientName={client.name}
             scheduledAt={client.scheduledAt}
+            scheduledEndAt={client.scheduledEndAt}
             occupied={occupied}
           />
         )}
@@ -164,14 +156,11 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
       <section className="mt-10">
         <h2 className="mb-4 font-serif text-lg text-stone-900">Booking inquiries</h2>
         {client.inquiries.length === 0 ? (
-          <p className="text-sm text-stone-500">
-            No booking inquiry is linked. This client was added manually.
-          </p>
+          <p className="text-sm text-stone-500">None</p>
         ) : (
           <ul className="space-y-2">
             {client.inquiries.map((inquiry) => {
               const phase = inquiryPhase(inquiry);
-              const bookedDate = isoDateFromValue(inquiry.scheduledAt);
               return (
                 <li key={inquiry.id}>
                   <Link
@@ -181,10 +170,10 @@ export default async function AdminClientDetailPage({ params }: PageProps) {
                     <div className="min-w-0">
                       <p className="text-sm text-stone-800">
                         {sessionTypeLabel(inquiry)}
-                        {phase === "booked" && bookedDate ? (
+                        {phase === "booked" && inquiry.scheduledAt ? (
                           <span className="text-stone-500">
                             {" "}
-                            · {formatBookedDate(bookedDate)}
+                            · {formatBookedSlot(inquiry.scheduledAt, inquiry.scheduledEndAt)}
                           </span>
                         ) : null}
                       </p>

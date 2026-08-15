@@ -8,28 +8,42 @@ import {
   bookClientOnDate,
   cancelClientBooking,
 } from "@/lib/client-admin-actions";
+import { type OccupiedBooking } from "@/lib/inquiry-phase";
 import {
-  formatBookedDate,
-  isoDateFromValue,
-  type OccupiedBooking,
-} from "@/lib/inquiry-phase";
+  DEFAULT_SLOT_END,
+  DEFAULT_SLOT_START,
+  denverDateFromDateTime,
+  denverTimeFromDateTime,
+  formatBookedSlot,
+} from "@/lib/inquiry-time";
 
 type Props = {
   clientId: string;
-  clientName: string;
   scheduledAt: Date | string | null;
+  scheduledEndAt: Date | string | null;
   occupied: OccupiedBooking[];
 };
 
 export default function ClientBookingControls({
   clientId,
-  clientName,
   scheduledAt,
+  scheduledEndAt,
   occupied,
 }: Props) {
   const router = useRouter();
-  const bookedDate = isoDateFromValue(scheduledAt);
-  const [selectedDate, setSelectedDate] = useState(bookedDate);
+  const [selectedDate, setSelectedDate] = useState(
+    denverDateFromDateTime(scheduledAt)
+  );
+  const [startTime, setStartTime] = useState(
+    scheduledEndAt
+      ? denverTimeFromDateTime(scheduledAt) ?? DEFAULT_SLOT_START
+      : DEFAULT_SLOT_START
+  );
+  const [endTime, setEndTime] = useState(
+    scheduledEndAt
+      ? denverTimeFromDateTime(scheduledEndAt) ?? DEFAULT_SLOT_END
+      : DEFAULT_SLOT_END
+  );
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -56,32 +70,34 @@ export default function ClientBookingControls({
     <div className="rounded-lg border border-[#5c6b4a]/20 bg-[#5c6b4a]/5 px-4 py-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-xs font-semibold uppercase tracking-wide text-[#3d4a32]">
-          Book a day
+          Book
         </p>
-        {bookedDate ? (
+        {scheduledAt ? (
           <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-0.5 text-xs font-medium text-violet-900">
-            Booked {formatBookedDate(bookedDate)}
+            {formatBookedSlot(scheduledAt, scheduledEndAt)}
           </span>
         ) : null}
       </div>
-      <p className="mt-2 text-sm text-stone-600">
-        Added without an inquiry, so contacted is not required.
-      </p>
       <div className="mt-3">
         <BookDaySection
           selectedDate={selectedDate}
           onSelect={setSelectedDate}
+          startTime={startTime}
+          endTime={endTime}
+          onStartTime={setStartTime}
+          onEndTime={setEndTime}
           occupied={occupied}
           currentClientId={clientId}
-          bookedDate={bookedDate}
-          bookedName={clientName}
+          bookedStartAt={scheduledAt}
           pending={pending}
           onBook={() => {
             if (!selectedDate) return;
-            void run(() => bookClientOnDate(clientId, selectedDate));
+            void run(() =>
+              bookClientOnDate(clientId, selectedDate, startTime, endTime)
+            );
           }}
           onCancel={
-            bookedDate
+            scheduledAt
               ? () => void run(() => cancelClientBooking(clientId))
               : undefined
           }

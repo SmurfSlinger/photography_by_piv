@@ -35,8 +35,9 @@ model Client {
   name        String
   email       String?
   createdAt   DateTime         @default(now()) @map("created_at")
-  scheduledAt DateTime?        @map("scheduled_at")
-  galleries   Gallery[]
+  scheduledAt    DateTime?        @map("scheduled_at")
+  scheduledEndAt DateTime?        @map("scheduled_end_at")
+  galleries      Gallery[]
   inquiries   BookingInquiry[]
 
   @@map("clients")
@@ -108,6 +109,7 @@ model BookingInquiry {
   contactedAt            DateTime?              @map("contacted_at")
   archivedAt             DateTime?              @map("archived_at")
   scheduledAt            DateTime?              @map("scheduled_at")
+  scheduledEndAt         DateTime?              @map("scheduled_end_at")
   externalCalendarId     String?                @map("external_calendar_id")
   spamScore              Int?                   @map("spam_score")
   spamReasons            String[]               @default([]) @map("spam_reasons")

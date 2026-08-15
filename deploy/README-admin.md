@@ -37,13 +37,13 @@ openssl rand -base64 32
 
 Usual path after a request:
 
-1. **Contact** — reply, then check **Contacted**. The calendar stays locked until this is checked.
-2. **Book a day** on the calendar. That holds the date (one booking per day), creates/links the client, and the dashboard calendar shows it as booked.
+1. **Contact** — reply, then check **Contacted**. Booking stays locked until this is checked.
+2. **Book** a day and time. Other times that day stay open. Creates/links the client.
 3. Open the client and create a gallery when you are ready to share photos.
 
-**Manual path:** **Add without inquiry**, then book a day on the client page. Contacted is not required there.
+**Manual path:** **Add without inquiry**, then book a time on the client page. Contacted is not required there.
 
-**Canceled** frees the day. Reopen if it was a mistake, then book again.
+**Canceled** frees the slot. Reopen if it was a mistake, then book again.
 
 The inquiry list is **collapsed by default**. Expand a row for contact details, the calendar, and notes. Flagged spam reasons still appear when the filter marked the request.
 
@@ -55,8 +55,8 @@ Migration: `20250603220000_booking_inquiry_spam_assessment`
 
 `/admin/clients` is the directory of people you work with. Galleries attach to a client.
 
-- **Usual path:** contact the inquiry, then book a day (creates and links the client)
-- **Manual path:** **Add without inquiry**, then book a day on the client page (no contacted step)
+- **Usual path:** contact the inquiry, then book a time (creates and links the client)
+- **Manual path:** **Add without inquiry**, then book a time on the client page (no contacted step)
 - Open a client to edit details or start a gallery for them
 
 ## Client galleries
@@ -83,7 +83,7 @@ npm run dev
 2. Wrong password — stays on login with an error.
 3. Correct token — lists inquiries newest first.
 4. Optional: `npm run seed-example-inquiry` to add a sample wedding request.
-5. Open an inquiry, check Contacted, then book a day. Or add a client without an inquiry and book from the client page. From the client, make a gallery and upload photos (requires R2).
+5. Open an inquiry, check Contacted, then book a time. Or add a client without an inquiry and book from the client page. From the client, make a gallery and upload photos (requires R2).
 6. View page source — no admin secret in HTML/JS.
 7. Sign out — returns to login.
 

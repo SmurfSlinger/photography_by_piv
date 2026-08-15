@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { ensureClientForInquiry } from "@/lib/client-from-inquiry";
 import { isClientId, parseClientInput } from "@/lib/client-admin";
-import { findBookingOnDate } from "@/lib/inquiry-bookings";
-import { utcNoonFromIso } from "@/lib/inquiry-phase";
+import { findOverlappingBooking } from "@/lib/inquiry-bookings";
+import { parseBookingSlot } from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export type ClientAdminActionResult =
@@ -95,7 +95,9 @@ export async function updateClient(
 
 export async function bookClientOnDate(
   clientId: string,
-  dateIso: string
+  dateIso: string,
+  startTime: string,
+  endTime: string
 ): Promise<ClientAdminActionResult> {
   if (!(await isAdminAuthenticated())) {
     return { ok: false, error: "Unauthorized" };
@@ -105,10 +107,8 @@ export async function bookClientOnDate(
     return { ok: false, error: "Invalid client" };
   }
 
-  const scheduledAt = utcNoonFromIso(dateIso);
-  if (!scheduledAt) {
-    return { ok: false, error: "Pick a valid day" };
-  }
+  const slot = parseBookingSlot(dateIso, startTime, endTime);
+  if (!slot.ok) return slot;
 
   const client = await prisma.client.findUnique({
     where: { id: clientId },
@@ -118,14 +118,16 @@ export async function bookClientOnDate(
     return { ok: false, error: "Client not found" };
   }
 
-  const taken = await findBookingOnDate(dateIso, { clientId });
+  const taken = await findOverlappingBooking(slot.start, slot.end, {
+    clientId,
+  });
   if (taken) {
-    return { ok: false, error: `Already booked for ${taken.name} on that day.` };
+    return { ok: false, error: `Overlaps ${taken.name}.` };
   }
 
   await prisma.client.update({
     where: { id: clientId },
-    data: { scheduledAt },
+    data: { scheduledAt: slot.start, scheduledEndAt: slot.end },
   });
   revalidateClientPaths(clientId);
   return { ok: true };
@@ -155,7 +157,7 @@ export async function cancelClientBooking(
 
   await prisma.client.update({
     where: { id: clientId },
-    data: { scheduledAt: null },
+    data: { scheduledAt: null, scheduledEndAt: null },
   });
   revalidateClientPaths(clientId);
   return { ok: true };

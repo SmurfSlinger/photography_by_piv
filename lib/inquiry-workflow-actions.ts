@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { ensureClientForInquiry } from "@/lib/client-from-inquiry";
-import { findBookingOnDate } from "@/lib/inquiry-bookings";
-import { inquiryPhase, utcNoonFromIso } from "@/lib/inquiry-phase";
+import { findOverlappingBooking } from "@/lib/inquiry-bookings";
+import { inquiryPhase } from "@/lib/inquiry-phase";
+import { parseBookingSlot } from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export type InquiryWorkflowActionResult =
@@ -63,8 +64,8 @@ export async function setInquiryContacted(
       ok: false,
       error:
         phase === "booked"
-          ? "Contacted stays checked after a day is booked."
-          : "Reopen this inquiry before changing contacted.",
+          ? "Contacted stays checked after booking."
+          : "Reopen first.",
     };
   }
 
@@ -87,34 +88,33 @@ export async function setInquiryContacted(
 
 export async function bookInquiryOnDate(
   inquiryId: string,
-  dateIso: string
+  dateIso: string,
+  startTime: string,
+  endTime: string
 ): Promise<InquiryWorkflowActionResult> {
   if (!(await isAdminAuthenticated())) {
     return { ok: false, error: "Unauthorized" };
   }
 
-  const scheduledAt = utcNoonFromIso(dateIso);
-  if (!scheduledAt) {
-    return { ok: false, error: "Pick a valid day" };
-  }
+  const slot = parseBookingSlot(dateIso, startTime, endTime);
+  if (!slot.ok) return slot;
 
   const loaded = await requireInquiry(inquiryId);
   if (!loaded.ok) return loaded;
 
   const phase = inquiryPhase(loaded.inquiry);
   if (phase === "canceled") {
-    return { ok: false, error: "Reopen this inquiry before booking a day." };
+    return { ok: false, error: "Reopen first." };
   }
   if (phase === "new") {
-    return { ok: false, error: "Mark contacted before booking a day." };
+    return { ok: false, error: "Mark contacted first." };
   }
 
-  const taken = await findBookingOnDate(dateIso, { inquiryId });
+  const taken = await findOverlappingBooking(slot.start, slot.end, {
+    inquiryId,
+  });
   if (taken) {
-    return {
-      ok: false,
-      error: `Already booked for ${taken.name} on that day.`,
-    };
+    return { ok: false, error: `Overlaps ${taken.name}.` };
   }
 
   const ensured = await ensureClientForInquiry(inquiryId);
@@ -126,7 +126,8 @@ export async function bookInquiryOnDate(
     where: { id: inquiryId },
     data: {
       status: "scheduled",
-      scheduledAt,
+      scheduledAt: slot.start,
+      scheduledEndAt: slot.end,
       archivedAt: null,
     },
   });
@@ -154,6 +155,7 @@ export async function cancelInquiryBooking(
     data: {
       status: "canceled",
       scheduledAt: null,
+      scheduledEndAt: null,
       archivedAt: new Date(),
     },
   });
@@ -181,6 +183,7 @@ export async function reopenInquiry(
     data: {
       status: loaded.inquiry.contactedAt ? "contacted" : "new",
       scheduledAt: null,
+      scheduledEndAt: null,
       archivedAt: null,
     },
   });

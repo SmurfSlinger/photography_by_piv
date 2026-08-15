@@ -14,7 +14,6 @@ import {
   setInquiryContacted,
 } from "@/lib/inquiry-workflow-actions";
 import {
-  formatBookedDate,
   inquiryPhase,
   inquiryPhaseBadgeClass,
   inquiryPhaseLabel,
@@ -22,6 +21,13 @@ import {
   type InquiryPhase,
   type OccupiedBooking,
 } from "@/lib/inquiry-phase";
+import {
+  DEFAULT_SLOT_END,
+  DEFAULT_SLOT_START,
+  denverDateFromDateTime,
+  denverTimeFromDateTime,
+  formatBookedSlot,
+} from "@/lib/inquiry-time";
 
 type Props = {
   inquiryId: string;
@@ -29,7 +35,7 @@ type Props = {
   adminNotes: string | null;
   contactedAt: Date | string | null;
   scheduledAt: Date | string | null;
-  archivedAt: Date | string | null;
+  scheduledEndAt: Date | string | null;
   preferredDate: Date | string | null;
   backupDate: Date | string | null;
   clientId: string | null;
@@ -48,7 +54,7 @@ export default function InquiryWorkflowControls({
   adminNotes: initialNotes,
   contactedAt,
   scheduledAt,
-  archivedAt,
+  scheduledEndAt,
   preferredDate,
   backupDate,
   clientId,
@@ -58,7 +64,17 @@ export default function InquiryWorkflowControls({
   const router = useRouter();
   const [adminNotes, setAdminNotes] = useState(initialNotes ?? "");
   const [selectedDate, setSelectedDate] = useState(
-    isoDateFromValue(scheduledAt) ?? isoDateFromValue(preferredDate)
+    denverDateFromDateTime(scheduledAt) ?? isoDateFromValue(preferredDate)
+  );
+  const [startTime, setStartTime] = useState(
+    scheduledEndAt
+      ? denverTimeFromDateTime(scheduledAt) ?? DEFAULT_SLOT_START
+      : DEFAULT_SLOT_START
+  );
+  const [endTime, setEndTime] = useState(
+    scheduledEndAt
+      ? denverTimeFromDateTime(scheduledEndAt) ?? DEFAULT_SLOT_END
+      : DEFAULT_SLOT_END
   );
   const [contactedOverride, setContactedOverride] = useState<boolean | null>(
     null
@@ -72,9 +88,7 @@ export default function InquiryWorkflowControls({
     scheduledAt,
     contactedAt,
   });
-  const bookedDate = isoDateFromValue(scheduledAt);
   const contacted = toDate(contactedAt);
-  const archived = toDate(archivedAt);
   const contactedChecked =
     contactedOverride ?? (phase !== "new" && phase !== "canceled");
   const canBook = phase === "booked" || phase === "contacted";
@@ -121,24 +135,19 @@ export default function InquiryWorkflowControls({
         <span
           className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryPhaseBadgeClass(phase)}`}
         >
-          {phase === "booked" && bookedDate
-            ? `Booked ${formatBookedDate(bookedDate)}`
+          {phase === "booked" && scheduledAt
+            ? formatBookedSlot(scheduledAt, scheduledEndAt)
             : inquiryPhaseLabel(phase)}
         </span>
       </div>
 
       {phase === "canceled" ? (
         <div className="mt-4">
-          <p className="text-sm text-stone-600">
-            Canceled
-            {archived ? ` ${formatInquiryDateTime(archived)}` : ""}. The day is
-            free again.
-          </p>
           <button
             type="button"
             onClick={() => void run(() => reopenInquiry(inquiryId))}
             disabled={pending}
-            className="mt-3 rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="rounded-full border border-[#5c6b4a] bg-white px-4 py-2 text-sm font-medium text-[#3d4a32] transition hover:bg-[#5c6b4a]/5 disabled:cursor-not-allowed disabled:opacity-60"
           >
             Reopen
           </button>
@@ -172,31 +181,36 @@ export default function InquiryWorkflowControls({
                 </span>
               ) : null}
             </label>
-            {!contactedChecked ? (
-              <p className="mt-2 text-sm text-stone-600">
-                Check this after you reply. Booking unlocks next.
-              </p>
-            ) : null}
           </section>
 
           <section className="mt-4 border-t border-[#5c6b4a]/15 pt-4">
             <p className="text-xs font-medium uppercase tracking-wide text-stone-500">
-              {phase === "booked" ? "Booked day" : "Book a day"}
+              Book
             </p>
             {canBook ? (
               <div className="mt-2">
                 <BookDaySection
                   selectedDate={selectedDate}
                   onSelect={setSelectedDate}
+                  startTime={startTime}
+                  endTime={endTime}
+                  onStartTime={setStartTime}
+                  onEndTime={setEndTime}
                   occupied={occupied}
                   currentInquiryId={inquiryId}
-                  bookedDate={bookedDate}
-                  bookedName={clientName}
+                  bookedStartAt={scheduledAt}
                   hintDates={hintDates}
                   pending={pending}
                   onBook={() => {
                     if (!selectedDate) return;
-                    void run(() => bookInquiryOnDate(inquiryId, selectedDate));
+                    void run(() =>
+                      bookInquiryOnDate(
+                        inquiryId,
+                        selectedDate,
+                        startTime,
+                        endTime
+                      )
+                    );
                   }}
                   onCancel={
                     phase === "booked"
@@ -205,11 +219,7 @@ export default function InquiryWorkflowControls({
                   }
                 />
               </div>
-            ) : (
-              <p className="mt-2 text-sm text-stone-500">
-                Calendar stays put until this inquiry is marked contacted.
-              </p>
-            )}
+            ) : null}
           </section>
         </>
       )}
@@ -219,7 +229,7 @@ export default function InquiryWorkflowControls({
           htmlFor={`notes-${inquiryId}`}
           className="text-xs font-medium uppercase tracking-wide text-stone-500"
         >
-          Admin notes (private)
+          Notes
         </label>
         <textarea
           id={`notes-${inquiryId}`}
@@ -227,7 +237,6 @@ export default function InquiryWorkflowControls({
           onChange={(e) => setAdminNotes(e.target.value)}
           disabled={pending}
           rows={3}
-          placeholder="Follow-up notes, call outcomes…"
           className="mt-1 w-full resize-y rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-800 placeholder:text-stone-400 focus:border-[#5c6b4a] focus:outline-none focus:ring-1 focus:ring-[#5c6b4a] disabled:opacity-60"
         />
       </section>
@@ -247,7 +256,7 @@ export default function InquiryWorkflowControls({
               href={`/admin/clients/${clientId}`}
               className="text-sm font-medium text-[#5c6b4a] underline-offset-2 hover:underline"
             >
-              {clientName ?? "Open client"}
+              {clientName ?? "Client"}
             </Link>
             <Link
               href={`/admin/galleries/new?clientId=${clientId}`}

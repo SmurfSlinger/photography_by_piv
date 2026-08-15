@@ -9,9 +9,9 @@ import { loadOccupiedBookings } from "@/lib/inquiry-bookings";
 import {
   bookingHref,
   bookingKey,
-  formatBookedDate,
   todayIsoInDenver,
 } from "@/lib/inquiry-phase";
+import { formatBookedSlot } from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -112,7 +112,7 @@ export default async function AdminDashboardPage() {
                     {booking.name}
                   </span>
                   <span className="shrink-0 text-stone-500">
-                    {formatBookedDate(booking.date)}
+                    {formatBookedSlot(booking.startAt, booking.endAt)}
                   </span>
                 </Link>
               </li>
@@ -120,7 +120,7 @@ export default async function AdminDashboardPage() {
           </ul>
         ) : (
           <p className="mt-4 text-sm text-stone-500">
-            No booked days yet. Book from an inquiry or a client.
+            None yet.
           </p>
         )}
       </section>

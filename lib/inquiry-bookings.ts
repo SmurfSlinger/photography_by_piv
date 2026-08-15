@@ -6,8 +6,12 @@ import {
   type InquiryPhase,
   type OccupiedBooking,
   isoDateFromValue,
-  utcNoonFromIso,
 } from "@/lib/inquiry-phase";
+import {
+  denverDateFromDateTime,
+  rangesOverlap,
+  slotRange,
+} from "@/lib/inquiry-time";
 import { prisma } from "@/lib/prisma";
 
 export type { OccupiedBooking };
@@ -32,12 +36,28 @@ export function prismaWhereForPhase(
   }
 }
 
-function dayRange(iso: string): { rangeStart: Date; nextDay: Date } | null {
-  if (!utcNoonFromIso(iso)) return null;
-  const rangeStart = new Date(`${iso}T00:00:00.000Z`);
-  const nextDay = new Date(rangeStart);
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-  return { rangeStart, nextDay };
+function toOccupied(input: {
+  start: Date;
+  end: Date | null;
+  name: string;
+  inquiryId?: string;
+  clientId?: string | null;
+}): OccupiedBooking | null {
+  const range = slotRange(input.start, input.end);
+  if (!range) return null;
+  const date = range.allDay
+    ? isoDateFromValue(input.start)
+    : denverDateFromDateTime(input.start);
+  if (!date) return null;
+  return {
+    date,
+    name: input.name,
+    startAt: range.start.toISOString(),
+    endAt: range.end.toISOString(),
+    allDay: range.allDay,
+    inquiryId: input.inquiryId,
+    clientId: input.clientId ?? undefined,
+  };
 }
 
 export async function loadOccupiedBookings(): Promise<OccupiedBooking[]> {
@@ -51,6 +71,7 @@ export async function loadOccupiedBookings(): Promise<OccupiedBooking[]> {
         id: true,
         name: true,
         scheduledAt: true,
+        scheduledEndAt: true,
         clientId: true,
         client: { select: { name: true } },
       },
@@ -58,7 +79,12 @@ export async function loadOccupiedBookings(): Promise<OccupiedBooking[]> {
     }),
     prisma.client.findMany({
       where: { scheduledAt: { not: null } },
-      select: { id: true, name: true, scheduledAt: true },
+      select: {
+        id: true,
+        name: true,
+        scheduledAt: true,
+        scheduledEndAt: true,
+      },
       orderBy: { scheduledAt: "asc" },
     }),
   ]);
@@ -67,75 +93,56 @@ export async function loadOccupiedBookings(): Promise<OccupiedBooking[]> {
   const inquiryClientDays = new Set<string>();
 
   for (const row of inquiryRows) {
-    const date = isoDateFromValue(row.scheduledAt);
-    if (!date) continue;
-    if (row.clientId) inquiryClientDays.add(`${row.clientId}:${date}`);
-    occupied.push({
-      date,
+    if (!row.scheduledAt) continue;
+    const booking = toOccupied({
+      start: row.scheduledAt,
+      end: row.scheduledEndAt,
       name: row.client?.name ?? row.name,
       inquiryId: row.id,
-      clientId: row.clientId ?? undefined,
+      clientId: row.clientId,
     });
+    if (!booking) continue;
+    if (row.clientId) inquiryClientDays.add(`${row.clientId}:${booking.date}`);
+    occupied.push(booking);
   }
 
   for (const row of clientRows) {
-    const date = isoDateFromValue(row.scheduledAt);
-    if (!date) continue;
-    if (inquiryClientDays.has(`${row.id}:${date}`)) continue;
-    occupied.push({
-      date,
+    if (!row.scheduledAt) continue;
+    const booking = toOccupied({
+      start: row.scheduledAt,
+      end: row.scheduledEndAt,
       name: row.name,
       clientId: row.id,
     });
+    if (!booking) continue;
+    if (inquiryClientDays.has(`${row.id}:${booking.date}`)) continue;
+    occupied.push(booking);
   }
 
-  occupied.sort((a, b) => a.date.localeCompare(b.date));
+  occupied.sort((a, b) => a.startAt.localeCompare(b.startAt));
   return occupied;
 }
 
-export async function findBookingOnDate(
-  iso: string,
+export async function findOverlappingBooking(
+  start: Date,
+  end: Date,
   except: BookingExcept = {}
 ): Promise<OccupiedBooking | null> {
-  const range = dayRange(iso);
-  if (!range) return null;
-
-  const inquiry = await prisma.bookingInquiry.findFirst({
-    where: {
-      status: { in: [...BOOKED_INQUIRY_STATUSES] },
-      scheduledAt: { gte: range.rangeStart, lt: range.nextDay },
-      ...(except.inquiryId ? { id: { not: except.inquiryId } } : {}),
-    },
-    select: {
-      id: true,
-      name: true,
-      scheduledAt: true,
-      clientId: true,
-      client: { select: { name: true } },
-    },
-  });
-
-  if (inquiry) {
-    return {
-      date: isoDateFromValue(inquiry.scheduledAt) ?? iso,
-      inquiryId: inquiry.id,
-      clientId: inquiry.clientId ?? undefined,
-      name: inquiry.client?.name ?? inquiry.name,
-    };
-  }
-
-  const client = await prisma.client.findFirst({
-    where: {
-      scheduledAt: { gte: range.rangeStart, lt: range.nextDay },
-      ...(except.clientId ? { id: { not: except.clientId } } : {}),
-    },
-    select: { id: true, name: true, scheduledAt: true },
-  });
-
-  if (!client) return null;
-  return {
-    date: isoDateFromValue(client.scheduledAt) ?? iso,
-    clientId: client.id,
-    name: client.name,
-  };
+  const occupied = await loadOccupiedBookings();
+  return (
+    occupied.find((booking) => {
+      if (except.inquiryId && booking.inquiryId === except.inquiryId) {
+        return false;
+      }
+      if (except.clientId && booking.clientId === except.clientId && !booking.inquiryId) {
+        return false;
+      }
+      return rangesOverlap(
+        start,
+        end,
+        new Date(booking.startAt),
+        new Date(booking.endAt)
+      );
+    }) ?? null
+  );
 }
