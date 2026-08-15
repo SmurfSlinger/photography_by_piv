@@ -1,5 +1,3 @@
-const marketingPlaceholder = "/images/hero.jpg";
-
 function marketingSrc(filename: string): string {
   return `/images/marketing/${filename}`;
 }
@@ -152,7 +150,7 @@ export const portfolio = {
 export const about = {
   heading: "About Me",
   name: "Piv",
-  imageSrc: marketingPlaceholder,
+  imageSrc: marketingSrc("IMG_7732.jpg"),
   imageAlt: "Piv, photographer based in Northern Utah",
   paragraphs: [
     "Hi, I'm Piv! I'm a photographer based in Northern Utah. I love capturing memories for the people around me, and I love meeting new people through photography.",
