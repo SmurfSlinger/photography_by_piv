@@ -80,25 +80,21 @@ export const specialtyCards = [
     src: marketingSrc("photograhybypiv-241.jpg"),
     alt: "Wedding photography",
     title: "Weddings",
-    subtitle: "Ceremony, reception, and all the details in between",
   },
   {
     src: marketingSrc("photograhybypiv-168.jpg"),
     alt: "Couple photography session",
     title: "Couples",
-    subtitle: "Anniversaries, engagements, and just-because photos",
   },
   {
     src: marketingSrc("photograhybypiv-22.jpg"),
     alt: "Portrait photography session",
     title: "Portraits",
-    subtitle: "Individual, birthdays, and creative styled sessions",
   },
   {
     src: marketingSrc("B44A6929.jpg"),
     alt: "Family photography session",
     title: "Families",
-    subtitle: "Newborn, family photos, and milestones",
   },
 ] as const;
 
