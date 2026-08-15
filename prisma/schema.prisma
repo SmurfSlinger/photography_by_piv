@@ -31,11 +31,14 @@ enum InquiryStatus {
 }
 
 model Client {
-  id        String    @id @default(uuid())
-  name      String
-  email     String?
-  createdAt DateTime  @default(now()) @map("created_at")
-  galleries Gallery[]
+  id          String           @id @default(uuid())
+  name        String
+  email       String?
+  createdAt   DateTime         @default(now()) @map("created_at")
+  scheduledAt    DateTime?        @map("scheduled_at")
+  scheduledEndAt DateTime?        @map("scheduled_end_at")
+  galleries      Gallery[]
+  inquiries   BookingInquiry[]
 
   @@map("clients")
 }
@@ -106,13 +109,17 @@ model BookingInquiry {
   contactedAt            DateTime?              @map("contacted_at")
   archivedAt             DateTime?              @map("archived_at")
   scheduledAt            DateTime?              @map("scheduled_at")
+  scheduledEndAt         DateTime?              @map("scheduled_end_at")
   externalCalendarId     String?                @map("external_calendar_id")
   spamScore              Int?                   @map("spam_score")
   spamReasons            String[]               @default([]) @map("spam_reasons")
   spamFlagged            Boolean                @default(false) @map("spam_flagged")
+  clientId               String?                @map("client_id")
+  client                 Client?                @relation(fields: [clientId], references: [id], onDelete: SetNull)
 
   @@index([createdAt])
   @@index([status])
   @@index([spamFlagged])
+  @@index([clientId])
   @@map("booking_inquiries")
 }

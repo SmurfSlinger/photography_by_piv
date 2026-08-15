@@ -1,4 +1,9 @@
-import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 import { isAllowedR2Key } from "@/lib/gallery-keys";
@@ -47,4 +52,41 @@ export async function presignGet(
   });
 
   return getSignedUrl(getS3Client(), command, { expiresIn: ttlSeconds });
+}
+
+export async function putGalleryObject(options: {
+  key: string;
+  slug: string;
+  body: Buffer;
+  contentType: string;
+}): Promise<void> {
+  if (!isAllowedR2Key(options.key, options.slug)) {
+    throw new Error("Invalid R2 object key for gallery");
+  }
+
+  await getS3Client().send(
+    new PutObjectCommand({
+      Bucket: requireEnv("R2_BUCKET_NAME"),
+      Key: options.key,
+      Body: options.body,
+      ContentType: options.contentType,
+      CacheControl: "private, max-age=31536000",
+    })
+  );
+}
+
+export async function deleteGalleryObject(options: {
+  key: string;
+  slug: string;
+}): Promise<void> {
+  if (!isAllowedR2Key(options.key, options.slug)) {
+    throw new Error("Invalid R2 object key for gallery");
+  }
+
+  await getS3Client().send(
+    new DeleteObjectCommand({
+      Bucket: requireEnv("R2_BUCKET_NAME"),
+      Key: options.key,
+    })
+  );
 }

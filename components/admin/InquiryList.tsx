@@ -4,10 +4,15 @@ import {
   contactMethodsLabel,
   formatInquiryDate,
   formatInquiryDateTime,
-  inquiryStatusBadgeClass,
-  inquiryStatusLabel,
   sessionTypeLabel,
 } from "@/lib/booking-inquiry-display";
+import {
+  inquiryPhase,
+  inquiryPhaseBadgeClass,
+  inquiryPhaseLabel,
+  type OccupiedBooking,
+} from "@/lib/inquiry-phase";
+import { formatBookedSlot } from "@/lib/inquiry-time";
 
 function Field({
   label,
@@ -29,8 +34,14 @@ function Field({
   );
 }
 
-function InquiryDetails({ item }: { item: InquiryWithSpam }) {
-  const { inquiry, spam, spamSource } = item;
+function InquiryDetails({
+  item,
+  occupied,
+}: {
+  item: InquiryWithSpam;
+  occupied: OccupiedBooking[];
+}) {
+  const { inquiry, spam } = item;
 
   return (
     <div className="border-t border-stone-100 px-4 pb-5 pt-4 sm:px-5">
@@ -39,25 +50,25 @@ function InquiryDetails({ item }: { item: InquiryWithSpam }) {
         status={inquiry.status}
         adminNotes={inquiry.adminNotes}
         contactedAt={inquiry.contactedAt}
-        archivedAt={inquiry.archivedAt}
+        scheduledAt={inquiry.scheduledAt}
+        scheduledEndAt={inquiry.scheduledEndAt}
+        preferredDate={inquiry.preferredDate}
+        backupDate={inquiry.backupDate}
+        clientId={item.client?.id ?? null}
+        clientName={item.client?.name ?? null}
+        occupied={occupied}
       />
 
       {spam.flagged && spam.reasons.length > 0 ? (
         <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3">
           <p className="text-xs font-semibold uppercase tracking-wide text-amber-900">
-            Spam / scam signals
-            {spamSource === "recomputed" ? " (recomputed — pre-migration inquiry)" : ""}
+            Flagged
           </p>
           <ul className="mt-2 list-inside list-disc text-sm text-amber-950">
             {spam.reasons.map((reason) => (
               <li key={reason}>{reason}</li>
             ))}
           </ul>
-          {spamSource === "recomputed" ? (
-            <p className="mt-2 text-xs text-amber-800/90">
-              IP-based rules may be omitted because the client IP was not stored.
-            </p>
-          ) : null}
         </div>
       ) : null}
 
@@ -67,38 +78,50 @@ function InquiryDetails({ item }: { item: InquiryWithSpam }) {
         <Field label="Instagram" value={inquiry.instagramHandle} />
         <Field label="Other contact" value={inquiry.contactOther} />
         <Field label="Package interest" value={inquiry.packageInterest} />
-        <Field label="Preferred date" value={formatInquiryDate(inquiry.preferredDate)} />
-        <Field label="Backup date" value={formatInquiryDate(inquiry.backupDate)} />
+        <Field
+          label="Preferred date"
+          value={formatInquiryDate(inquiry.preferredDate)}
+        />
+        <Field
+          label="Backup date"
+          value={formatInquiryDate(inquiry.backupDate)}
+        />
         <Field label="Location idea" value={inquiry.locationIdea} />
         <Field label="Vibe / style" value={inquiry.vibeStyle} />
-        <Field
-          label="Spam score"
-          value={
-            spam.flagged
-              ? `${spam.score} (flagged)`
-              : String(spam.score)
-          }
-        />
       </dl>
 
       <div className="mt-4">
         <Field label="Message" value={inquiry.message} />
       </div>
-
-      <p className="mt-4 break-all font-mono text-xs text-stone-400">
-        ID {inquiry.id}
-      </p>
     </div>
   );
 }
 
-function InquiryRow({ item }: { item: InquiryWithSpam }) {
+function InquiryRow({
+  item,
+  occupied,
+  defaultOpen,
+}: {
+  item: InquiryWithSpam;
+  occupied: OccupiedBooking[];
+  defaultOpen: boolean;
+}) {
   const { inquiry, spam } = item;
+  const phase = inquiryPhase(inquiry);
   const preferred = formatInquiryDate(inquiry.preferredDate);
-  const preferredShort = preferred !== "—" ? preferred : null;
+  const subtitleDate =
+    phase === "booked" && inquiry.scheduledAt
+      ? formatBookedSlot(inquiry.scheduledAt, inquiry.scheduledEndAt)
+      : preferred !== "—"
+        ? preferred
+        : null;
 
   return (
-    <details className="group rounded-xl border border-stone-200/80 bg-white shadow-sm open:border-stone-300 open:shadow-md">
+    <details
+      id={`inquiry-${inquiry.id}`}
+      className="group rounded-xl border border-stone-200/80 bg-white shadow-sm open:border-stone-300 open:shadow-md"
+      {...(defaultOpen ? { open: true } : {})}
+    >
       <summary className="flex cursor-pointer list-none items-start gap-3 rounded-xl px-4 py-4 transition hover:bg-stone-50/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#5c6b4a] sm:px-5 [&::-webkit-details-marker]:hidden">
         <span
           className="mt-1 shrink-0 text-stone-400 transition group-open:rotate-90"
@@ -115,8 +138,8 @@ function InquiryRow({ item }: { item: InquiryWithSpam }) {
           </div>
           <p className="mt-1 text-sm text-stone-600">
             {sessionTypeLabel(inquiry)}
-            {preferredShort ? (
-              <span className="text-stone-500"> · Pref. {preferredShort}</span>
+            {subtitleDate ? (
+              <span className="text-stone-500"> · {subtitleDate}</span>
             ) : null}
           </p>
           <p className="mt-1 text-xs text-stone-500">
@@ -125,34 +148,35 @@ function InquiryRow({ item }: { item: InquiryWithSpam }) {
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <span
-            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryStatusBadgeClass(inquiry.status)}`}
+            className={`rounded-full border px-2.5 py-0.5 text-xs font-medium ${inquiryPhaseBadgeClass(phase)}`}
           >
-            {inquiryStatusLabel(inquiry.status)}
+            {inquiryPhaseLabel(phase)}
           </span>
           {spam.flagged ? (
             <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-900">
-              Spam {spam.score}
+              Flagged
             </span>
-          ) : (
-            <span className="rounded-full bg-stone-100 px-2.5 py-0.5 text-xs text-stone-600">
-              OK
-            </span>
-          )}
-          <span className="text-xs text-[#5c6b4a] group-open:hidden">
-            Tap to expand
-          </span>
+          ) : null}
         </div>
       </summary>
-      <InquiryDetails item={item} />
+      <InquiryDetails item={item} occupied={occupied} />
     </details>
   );
 }
 
-export default function InquiryList({ items }: { items: InquiryWithSpam[] }) {
+export default function InquiryList({
+  items,
+  occupied,
+  openId,
+}: {
+  items: InquiryWithSpam[];
+  occupied: OccupiedBooking[];
+  openId?: string | null;
+}) {
   if (items.length === 0) {
     return (
       <p className="rounded-xl border border-dashed border-stone-300 bg-white/60 px-6 py-12 text-center text-stone-600">
-        No booking inquiries yet.
+        No inquiries in this view.
       </p>
     );
   }
@@ -161,7 +185,11 @@ export default function InquiryList({ items }: { items: InquiryWithSpam[] }) {
     <ul className="space-y-3">
       {items.map((item) => (
         <li key={item.inquiry.id}>
-          <InquiryRow item={item} />
+          <InquiryRow
+            item={item}
+            occupied={occupied}
+            defaultOpen={openId === item.inquiry.id}
+          />
         </li>
       ))}
     </ul>

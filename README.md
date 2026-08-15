@@ -27,7 +27,13 @@ npm run db:deploy    # production (R310)
 npm run db:migrate   # local development
 ```
 
-### Register a gallery (existing R2 files)
+### Create a gallery
+
+In `/admin` (after signing in): work an inquiry (contact → schedule → convert/create client), then **New gallery**, upload photos, set it Active, then create a share link.
+
+Photos are stored in R2 at `galleries/{slug}/{filename}`. Each file can be up to 50 MB.
+
+### Register a gallery from existing R2 files (CLI fallback)
 
 Edit a manifest (see [`scripts/seed/example.json`](scripts/seed/example.json)), then:
 
@@ -52,10 +58,13 @@ Prints a one-time share URL: `https://yoursite.com/g/{slug}?t=...`
 3. `/g/{slug}` loads photos via signed URLs (display uses `thumb ?? web ?? original`; MVP uses originals).
 4. Download requests a short-lived signed URL for the original only.
 
-### Scripts only (no admin HTTP API)
+### Register and share
 
-- `npm run register-gallery`
-- `npm run create-gallery-token`
+- `/admin/inquiries` — contact, schedule, then convert/create a client
+- `/admin/clients` — clients from inquiries, or add someone by hand
+- `/admin/galleries` — create galleries for a client, upload photos, and create/revoke share links
+- `npm run register-gallery` — CLI fallback to create DB rows for existing R2 files
+- `npm run create-gallery-token` — CLI fallback for share links
 
 R2 secret keys and token peppers stay on the server; the browser only receives presigned URLs.
 

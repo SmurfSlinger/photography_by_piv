@@ -54,6 +54,8 @@ function buildSampleInquiry(flagged: boolean): BookingInquiry {
     contactedAt: null,
     archivedAt: null,
     scheduledAt: null,
+    scheduledEndAt: null,
+    clientId: null,
     externalCalendarId: null,
     spamScore: spam.score,
     spamReasons: spam.reasons,

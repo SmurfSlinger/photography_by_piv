@@ -4,40 +4,37 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import {
-  INQUIRY_STATUSES,
-  INQUIRY_STATUS_LABELS,
-  type InquiryStatusValue,
-} from "@/lib/booking-inquiry-admin";
+  INQUIRY_PHASES,
+  INQUIRY_PHASE_LABELS,
+  type InquiryPhase,
+} from "@/lib/inquiry-phase";
 
 type Props = {
-  activeStatus: InquiryStatusValue | null;
-  counts: Record<InquiryStatusValue | "all", number>;
+  activePhase: InquiryPhase | null;
+  counts: Record<InquiryPhase | "all", number>;
 };
 
-function filterHref(pathname: string, status: InquiryStatusValue | null): string {
-  if (!status) return pathname;
-  return `${pathname}?status=${status}`;
+function filterHref(pathname: string, phase: InquiryPhase | null): string {
+  if (!phase) return pathname;
+  return `${pathname}?status=${phase}`;
 }
 
-export default function InquiryStatusFilter({ activeStatus, counts }: Props) {
-  const pathname = usePathname();
+export default function InquiryStatusFilter({ activePhase, counts }: Props) {
+  const pathname = usePathname() ?? "/admin/inquiries";
 
-  const filters: { key: InquiryStatusValue | "all"; label: string }[] = [
+  const filters: { key: InquiryPhase | "all"; label: string }[] = [
     { key: "all", label: "All" },
-    ...INQUIRY_STATUSES.map((value) => ({
+    ...INQUIRY_PHASES.map((value) => ({
       key: value,
-      label: INQUIRY_STATUS_LABELS[value],
+      label: INQUIRY_PHASE_LABELS[value],
     })),
   ];
 
   return (
-    <nav
-      className="flex flex-wrap gap-2"
-      aria-label="Filter inquiries by status"
-    >
+    <nav className="flex flex-wrap gap-2" aria-label="Filter inquiries">
       {filters.map(({ key, label }) => {
         const isActive =
-          key === "all" ? activeStatus === null : activeStatus === key;
+          key === "all" ? activePhase === null : activePhase === key;
         const count = counts[key];
 
         return (

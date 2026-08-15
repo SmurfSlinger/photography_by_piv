@@ -12,7 +12,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "register-gallery": "tsx --env-file=.env scripts/register-gallery.ts",
-    "create-gallery-token": "tsx --env-file=.env scripts/create-gallery-token.ts"
+    "create-gallery-token": "tsx --env-file=.env scripts/create-gallery-token.ts",
+    "seed-example-inquiry": "tsx --env-file=.env scripts/seed-example-inquiry.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1056.0",

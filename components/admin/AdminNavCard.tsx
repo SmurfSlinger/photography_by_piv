@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 
 type AdminNavCardProps = {
   title: string;
-  description: string;
   href?: string;
   disabled?: boolean;
   badge?: ReactNode;
@@ -11,26 +10,15 @@ type AdminNavCardProps = {
 
 export default function AdminNavCard({
   title,
-  description,
   href,
   disabled = false,
   badge,
 }: AdminNavCardProps) {
   const inner = (
-    <>
-      <div className="flex items-start justify-between gap-3">
-        <h2 className="font-serif text-lg text-stone-900">{title}</h2>
-        {badge}
-      </div>
-      <p className="mt-2 text-sm leading-relaxed text-stone-600">{description}</p>
-      {disabled ? (
-        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-stone-400">
-          Coming soon
-        </p>
-      ) : (
-        <p className="mt-4 text-sm font-medium text-[#5c6b4a]">Open →</p>
-      )}
-    </>
+    <div className="flex items-center justify-between gap-3">
+      <h2 className="font-serif text-lg text-stone-900">{title}</h2>
+      {badge}
+    </div>
   );
 
   const className =
