@@ -46,7 +46,7 @@ The inquiry list is **collapsed by default** (native `<details>` rows). Tap a ro
 
 `/admin/galleries` lists galleries already registered (CLI `register-gallery`). From a row you can:
 
-- Change status (`draft` / `active` / `archived`)
+- Change status: Draft is unpublished only. After leaving Draft, switch between Active and Archived (cannot return to Draft)
 - Create a client share URL (shown **once**; store it before leaving the page)
 - Revoke existing links
 

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import {
   buildGalleryShareUrl,
+  canTransitionGalleryStatus,
   isGalleryStatus,
   type GalleryStatusValue,
 } from "@/lib/gallery-admin";
@@ -129,11 +130,19 @@ export async function updateGalleryStatus(
 
   const existing = await prisma.gallery.findUnique({
     where: { id: galleryId },
-    select: { id: true },
+    select: { id: true, status: true },
   });
 
   if (!existing) {
     return { ok: false, error: "Gallery not found" };
+  }
+
+  if (!canTransitionGalleryStatus(existing.status, status)) {
+    return {
+      ok: false,
+      error:
+        "Draft is only for unpublished galleries. After that, a gallery can be Active or Archived.",
+    };
   }
 
   await prisma.gallery.update({

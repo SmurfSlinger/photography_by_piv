@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 import {
-  GALLERY_STATUSES,
+  allowedGalleryStatuses,
   GALLERY_STATUS_LABELS,
   type GalleryStatusValue,
 } from "@/lib/gallery-admin";
@@ -42,6 +42,7 @@ export default function GalleryShareControls({
   const [copied, setCopied] = useState(false);
 
   const archived = status === "archived";
+  const statusOptions = allowedGalleryStatuses(status);
 
   async function handleStatus(next: GalleryStatusValue) {
     if (next === status || pending) return;
@@ -124,11 +125,13 @@ export default function GalleryShareControls({
   return (
     <div className="space-y-4">
       <div
-        className="grid grid-cols-3 overflow-hidden rounded-lg border border-stone-200"
+        className={`grid overflow-hidden rounded-lg border border-stone-200 ${
+          statusOptions.length === 3 ? "grid-cols-3" : "grid-cols-2"
+        }`}
         role="group"
         aria-label="Status"
       >
-        {GALLERY_STATUSES.map((value) => {
+        {statusOptions.map((value) => {
           const selected = status === value;
           return (
             <button

@@ -18,6 +18,23 @@ export function isGalleryStatus(value: string): value is GalleryStatusValue {
   return (GALLERY_STATUSES as readonly string[]).includes(value);
 }
 
+/** Draft is unpublished only. After leaving it, galleries stay Active or Archived. */
+export function allowedGalleryStatuses(
+  current: GalleryStatusValue | string
+): readonly GalleryStatusValue[] {
+  if (current === "draft") {
+    return GALLERY_STATUSES;
+  }
+  return ["active", "archived"];
+}
+
+export function canTransitionGalleryStatus(
+  from: GalleryStatusValue | string,
+  to: GalleryStatusValue
+): boolean {
+  return allowedGalleryStatuses(from).includes(to);
+}
+
 export const GALLERY_STATUS_BADGE_CLASSES: Record<GalleryStatusValue, string> = {
   draft: "border-stone-200 bg-stone-100 text-stone-600",
   active: "border-emerald-200 bg-emerald-50 text-emerald-900",
